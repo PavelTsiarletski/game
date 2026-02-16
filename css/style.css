@@ -25,77 +25,17 @@ body{
   overflow-x:hidden;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent; /* Remove grey tap box */
 }
 
-/* Starfield canvas behind everything */
-#stars{
-  position:fixed;
-  inset:0;
-  z-index:-1;
-  width:100%;
-  height:100%;
-  display:block;
+/* ... */
+
+button, .btn, .orb, .toggle-label, .golden-orb{
+  touch-action: manipulation; /* Remove double-tap zoom delay */
 }
 
-/* Toggle Switch */
-.toggle-label{
-  display:flex;align-items:center;gap:8px;cursor:pointer;
-  font-size:12px; color:var(--muted);
-}
-.toggle-switch{
-  position:relative; width:36px; height:20px;
-}
-.toggle-switch input{opacity:0;width:0;height:0}
-.slider{
-  position:absolute; inset:0; border-radius:34px;
-  background: rgba(255,255,255,.1);
-  transition:.3s;
-  border:1px solid rgba(255,255,255,.1);
-}
-.slider:before{
-  position:absolute; content:"";
-  height:14px; width:14px;
-  left:2px; bottom:2px;
-  background:white;
-  transition:.3s;
-  border-radius:50%;
-}
-input:checked + .slider{ background: var(--accent); border-color:var(--accent); }
-input:checked + .slider:before{ transform: translateX(16px); }
+/* ... existing code ... */
 
-
-header{
-  padding:18px 18px 0;
-  max-width:1200px;
-  margin:0 auto;
-  display:flex;
-  gap:12px;
-  align-items:center;
-  justify-content:space-between;
-}
-.title{
-  display:flex;align-items:center;gap:12px;
-}
-.logo{
-  width:34px;height:34px;border-radius:12px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  box-shadow: 0 10px 22px rgba(124,92,255,.28);
-}
-h1{
-  font-size:16px;
-  margin:0;
-  letter-spacing:.4px;
-  font-weight:650;
-}
-.sub{
-  margin:0;
-  font-size:12px;
-  color:var(--muted);
-}
-
-.actions{
-  display:flex;gap:10px;align-items:center;
-}
 button, .btn{
   appearance:none;
   border:1px solid var(--border);
@@ -109,7 +49,9 @@ button, .btn{
   box-shadow: 0 12px 30px rgba(0,0,0,.22);
   user-select:none;
 }
-button:hover{border-color:rgba(255,255,255,.22)}
+@media (hover: hover) {
+  button:hover{border-color:rgba(255,255,255,.22)}
+}
 button:active{transform: translateY(1px) scale(.99)}
 button:disabled{opacity:.45; cursor:not-allowed}
 .btn-accent{
@@ -398,7 +340,9 @@ main{
     cursor:pointer;
     transition: .2s;
 }
-.btn-prestige-buy:hover{
-    background: linear-gradient(180deg, rgba(124,92,255,.35), rgba(124,92,255,.15));
-    box-shadow: 0 0 15px rgba(124,92,255,.25);
+@media (hover: hover) {
+    .btn-prestige-buy:hover{
+        background: linear-gradient(180deg, rgba(124,92,255,.35), rgba(124,92,255,.15));
+        box-shadow: 0 0 15px rgba(124,92,255,.25);
+    }
 }
