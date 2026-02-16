@@ -72,7 +72,7 @@ window.Game.PlanetConfig = (function(){
             currency: "matter", // Costs Matter
             baseCost: 15, 
             freeFirst: true,
-            growth: 1.5, // Only the matter cost grows exponentially? Or linear for tiers? keeping exp for Tier 1
+            growth: 1.15, // Reduced from 1.5 to make early game easier
             desc: "Dust grains stick together. Produces Matter.",
             effect: (lvl) => lvl * 1 // Produces Matter
         },
