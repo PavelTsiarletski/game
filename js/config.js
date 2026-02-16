@@ -18,7 +18,9 @@ window.Game.Config = (function(){
         return base + tier * 2;
     }
 
-    function autoBonus(dronesLvl, minerLvl = 0, stationLvl = 0, swarmLvl = 0){
+    function autoBonus(dronesLvl, minerLvl = 0, stationLvl = 0, swarmLvl = 0, stardustLvl = 0, blackHoleLvl = 0, singularityLvl = 0){
+        // Stardust: ~8/sec
+        const stardust = Math.max(0, stardustLvl * 8 + Math.floor(stardustLvl/10) * 12);
         // Drones: ~0.6/sec
         const drone = Math.max(0, dronesLvl * 0.6 + Math.floor(dronesLvl/10) * 1.5);
         // Miners: ~5/sec base
@@ -27,12 +29,17 @@ window.Game.Config = (function(){
         const station = Math.max(0, stationLvl * 25 + Math.floor(stationLvl/10) * 50);
         // Swarm: ~150/sec
         const swarm = Math.max(0, swarmLvl * 150 + Math.floor(swarmLvl/10) * 400);
+        // Black Hole: ~500/sec
+        const blackHole = Math.max(0, blackHoleLvl * 500 + Math.floor(blackHoleLvl/10) * 1000);
+        // Singularity: ~2500/sec
+        const singularity = Math.max(0, singularityLvl * 2500 + Math.floor(singularityLvl/10) * 5000);
         
-        return drone + miner + station + swarm;
+        return stardust + drone + miner + station + swarm + blackHole + singularity;
     }
 
     function critChance(capLvl){
-        return clamp(capLvl * 0.01, 0, 0.35); 
+        // 0.5% per level, max 50%
+        return Math.min(0.5, capLvl * 0.005); 
     }
 
     // ---------- Upgrade Definitions ----------
@@ -43,44 +50,53 @@ window.Game.Config = (function(){
             badge: "click",
             desc: "Увеличивает энергию за клик.",
             baseCost: 15,
-            growth: 1.18,
-            effectText: (lvl) => `За клик: +${clickBonus(lvl)}`,
+            growth: 1.4,
+            effectText: (lvl) => `Ур.: ${lvl} • За клик: +${clickBonus(lvl)}`,
+        },
+        {
+            id: "stardust",
+            name: "Сборщик Пыли",
+            badge: "auto",
+            desc: "Собирает звездную пыль. Мелочь, а приятно.",
+            baseCost: 30,
+            growth: 1.3,
+            effectText: (lvl) => `Авто: +8/c`,
         },
         {
             id: "drones",
-            name: "Сборочные дроны",
+            name: "Дроны-добытчики",
             badge: "auto",
-            desc: "Пассивно генерируют энергию (мало).",
-            baseCost: 60,
-            growth: 1.22,
-            effectText: (lvl) => `Авто: +0.6/c (всего ${autoBonus(lvl).toFixed(1)}/c)`,
+            desc: "Маленькие помощники. Добывают крохи энергии.",
+            baseCost: 100,
+            growth: 1.25,
+            effectText: (lvl) => `Авто: +0.6/c`,
         },
         {
-            id: "miner", // New
-            name: "Эфирный бур",
-            badge: "auto+",
-            desc: "Добывает энергию из эфира (много).",
-            baseCost: 1200,
-            growth: 1.24,
+            id: "miner",
+            name: "Энерго-шахта",
+            badge: "auto",
+            desc: "Бурит пространство в поисках энергии.",
+            baseCost: 500,
+            growth: 1.3,
             effectText: (lvl) => `Авто: +5/c`, 
         },
         {
-            id: "reactor",
-            name: "Квантовый реактор",
-            badge: "mult",
-            desc: "Увеличивает множитель ко всем источникам.",
-            baseCost: 250,
-            growth: 1.28,
-            effectText: (lvl) => `Реактор: x${(1 + 0.08 * lvl - 0.0006 * lvl * lvl).toFixed(2)}`,
+            id: "nanobots",
+            name: "Наноботы",
+            badge: "syn",
+            desc: "Синергия: +1 к силе клика за каждые 5 зданий.",
+            baseCost: 1200,
+            growth: 1.4,
+            effectText: (lvl) => `Клик +${lvl} за 5 зданий`,
         },
         {
-            id: "capacitor",
-            name: "Импульсный конденсатор",
-            badge: "crit",
-            desc: "Шанс крит-клика: +1% за уровень (x3 урон).",
-            baseCost: 120,
-            growth: 1.25,
-            effectText: (lvl) => `Крит шанс: ${(critChance(lvl)*100).toFixed(0)}%`,
+            id: "alien",
+            name: "Инопланетный чип",
+            badge: "click%",
+            desc: "Мультипликатор клика: +5% (сложно).",
+            baseCost: 3500,
+            growth: 1.8,
+            effectText: (lvl) => `Клик x${Math.pow(1.05, lvl).toFixed(2)}`,
         },
         {
             id: "neural",
@@ -110,11 +126,56 @@ window.Game.Config = (function(){
             effectText: (lvl) => `Авто: +150/c`,
         },
         {
+            id: "blackhole",
+            name: "Генератор ЧД",
+            badge: "hyper",
+            desc: "Извлекает энергию из горизонта событий.",
+            baseCost: 120000,
+            growth: 1.4,
+            effectText: (lvl) => `Авто: +500/c`,
+        },
+        {
+            id: "singularity",
+            name: "Сингулярность",
+            badge: "ultra",
+            desc: "Сжимает пространство-время в чистую энергию.",
+            baseCost: 800000,
+            growth: 1.5,
+            effectText: (lvl) => `Авто: +2500/c`,
+        },
+        {
+            id: "reactor",
+            name: "Реактор ТМ",
+            badge: "mult+",
+            desc: "Усиливает эффективность Темной Материи.",
+            baseCost: 5000,
+            growth: 1.5,
+            effectText: (lvl) => `ТМ бонус: +${lvl*10}%`,
+        },
+        {
+            id: "capacitor",
+            name: "Флюксовый куб",
+            badge: "crit",
+            desc: "Повышает шанс критического клика.",
+            baseCost: 2000,
+            growth: 1.3,
+            effectText: (lvl) => `Крит шанс: ${(critChance(lvl)*100).toFixed(0)}%`,
+        },
+        {
+            id: "timecrystal",
+            name: "Кристалл Времени",
+            badge: "global",
+            desc: "Ускоряет само время. +5% ко ВСЕЙ добыче.",
+            baseCost: 50000,
+            growth: 1.55,
+            effectText: (lvl) => `Все x${Math.pow(1.05, lvl).toFixed(2)}`,
+        },
+        {
             id: "fusion",
             name: "Термоядерное ядро",
             badge: "mult++",
             desc: "Мощный усилитель. Каждое ядро умножает ВСЮ добычу на 1.5.",
-            baseCost: 150000, // Rebalanced cost
+            baseCost: 1500000, // Rebalanced cost higher due to new upgrades
             growth: 1.6, 
             effectText: (lvl) => `Бонус: x${Math.pow(1.5, lvl).toFixed(2)}`,
         }

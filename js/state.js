@@ -10,13 +10,19 @@ window.Game.State = (function(){
         darkMatter: 0, // Prestige currency
         upgrades: {
             clickPower: 0,
+            stardust: 0,
             drones: 0,
             miner: 0,
             station: 0,
             swarm: 0,
+            blackhole: 0,
+            singularity: 0,
+            nanobots: 0,
+            alien: 0,
             neural: 0,
             reactor: 0,
             capacitor: 0,
+            timecrystal: 0,
             fusion: 0
         },
         prestigeUpgrades: {}, // New: Persistent across soft resets
