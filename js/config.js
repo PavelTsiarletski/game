@@ -18,12 +18,17 @@ window.Game.Config = (function(){
         return base + tier * 2;
     }
 
-    function autoBonus(dronesLvl, minerLvl = 0){
+    function autoBonus(dronesLvl, minerLvl = 0, stationLvl = 0, swarmLvl = 0){
         // Drones: ~0.6/sec
         const drone = Math.max(0, dronesLvl * 0.6 + Math.floor(dronesLvl/10) * 1.5);
         // Miners: ~5/sec base
         const miner = Math.max(0, minerLvl * 5 + Math.floor(minerLvl/10) * 8);
-        return drone + miner;
+        // Station: ~25/sec
+        const station = Math.max(0, stationLvl * 25 + Math.floor(stationLvl/10) * 50);
+        // Swarm: ~150/sec
+        const swarm = Math.max(0, swarmLvl * 150 + Math.floor(swarmLvl/10) * 400);
+        
+        return drone + miner + station + swarm;
     }
 
     function critChance(capLvl){
@@ -78,12 +83,39 @@ window.Game.Config = (function(){
             effectText: (lvl) => `Крит шанс: ${(critChance(lvl)*100).toFixed(0)}%`,
         },
         {
+            id: "neural",
+            name: "Нейролинкед",
+            badge: "link",
+            desc: "Синергия: 15% от авто-дохода добавляется к клику.",
+            baseCost: 5000,
+            growth: 1.6,
+            effectText: (lvl) => `Клик +${(lvl * 15)}% от авто`,
+        },
+        {
+            id: "station",
+            name: "Орбитальная станция",
+            badge: "auto++",
+            desc: "Крупный комплекс на орбите.",
+            baseCost: 8500,
+            growth: 1.3,
+            effectText: (lvl) => `Авто: +25/c`,
+        },
+        {
+            id: "swarm",
+            name: "Рой Дайсона",
+            badge: "mega",
+            desc: "Окружает звезду для сбора всей энергии.",
+            baseCost: 45000,
+            growth: 1.35,
+            effectText: (lvl) => `Авто: +150/c`,
+        },
+        {
             id: "fusion",
             name: "Термоядерное ядро",
             badge: "mult++",
             desc: "Мощный усилитель. Каждое ядро умножает ВСЮ добычу на 1.5.",
-            baseCost: 15000,
-            growth: 1.5, // Steep cost growth
+            baseCost: 150000, // Rebalanced cost
+            growth: 1.6, 
             effectText: (lvl) => `Бонус: x${Math.pow(1.5, lvl).toFixed(2)}`,
         }
     ];

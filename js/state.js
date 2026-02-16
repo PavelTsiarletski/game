@@ -12,6 +12,9 @@ window.Game.State = (function(){
             clickPower: 0,
             drones: 0,
             miner: 0,
+            station: 0,
+            swarm: 0,
+            neural: 0,
             reactor: 0,
             capacitor: 0,
             fusion: 0

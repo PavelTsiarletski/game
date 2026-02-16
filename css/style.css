@@ -67,6 +67,7 @@ main{
   max-width:1200px;
   margin:16px auto 40px;
   padding:0 18px;
+  padding-bottom: calc(40px + env(safe-area-inset-bottom));
   display:grid;
   grid-template-columns: 1.2fr .8fr;
   gap:14px;

@@ -51,7 +51,20 @@ window.Game.Core = (function(){
     }
 
     function getPerClick(state){
-        const base = 1 + clickBonus(getUpgradeLevel(state, "clickPower"));
+        let base = 1 + clickBonus(getUpgradeLevel(state, "clickPower"));
+        
+        // Neural Link Synergy
+        const neuralLvl = getUpgradeLevel(state, "neural");
+        if(neuralLvl > 0){
+            // 15% of *base* auto production added to base click? Or total?
+            // Let's use raw auto base for stability, or current perSec
+            // Using current perSec creates a feedback loop if perSec depended on click (it doesn't).
+            const autoRaw = getPerSec(state); 
+            // Warning: getPerSec calls getTotalMultiplier. getPerClick calls getTotalMultiplier.
+            // This is fine.
+            base += autoRaw * (0.15 * neuralLvl);
+        }
+
         const mult = getTotalMultiplier(state);
         return base * mult;
     }
@@ -59,7 +72,9 @@ window.Game.Core = (function(){
     function getPerSec(state){
         const base = autoBonus(
             getUpgradeLevel(state, "drones"),
-            getUpgradeLevel(state, "miner")
+            getUpgradeLevel(state, "miner"),
+            getUpgradeLevel(state, "station"),
+            getUpgradeLevel(state, "swarm")
         );
         const mult = getTotalMultiplier(state);
         return base * mult;
