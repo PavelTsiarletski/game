@@ -156,20 +156,27 @@ window.Game.Main = (function(){
     });
 
     ui.btnBuyMax.addEventListener("click", () => {
-        let boughtAny = false;
-        for (let pass = 0; pass < 12; pass++){
+        let totalBought = 0;
+        // Loop until we can't buy anything or hit safety limit
+        // 12 was too low for late game. 1000 is safe given exponential growth.
+        for (let pass = 0; pass < 1000; pass++){
             let boughtThisPass = false;
             for (const def of upgrades){
                 const cost = getNextCost(state, def.id);
+                // Optimization: don't even call buyUpgrade if check fails
                 if (state.energy >= cost){
-                    buyUpgrade(state, def.id, 1);
-                    boughtThisPass = true;
-                    boughtAny = true;
+                    if(buyUpgrade(state, def.id, 1)){
+                        boughtThisPass = true;
+                        totalBought++;
+                    }
                 }
             }
             if (!boughtThisPass) break;
         }
-        if (!boughtAny) showToast("Нечего купить");
+        
+        if (totalBought > 0) showToast(`Куплено: ${totalBought} уровней`);
+        else showToast("Не хватает энергии");
+        
         updateUI();
     });
 
