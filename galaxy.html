@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <title>Galaxy Clicker (mini)</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="stars"></canvas>
+
+  <header>
+    <div class="title">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <a href="index.html" style="text-decoration:none; color:var(--muted); font-size:14px; display:block; margin-bottom:4px;">← Меню</a>
+        <h1>Galaxy Clicker (mini)</h1>
+        <p class="sub">Кликаешь по ядру — получаешь энергию. Покупаешь апгрейды — растёшь.</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btnSave" title="Сохранить вручную">Save</button>
+      <button id="btnReset" class="btn-danger" title="Сбросить прогресс">Reset</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left: gameplay -->
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <p class="card-title">Ядро</p>
+        </div>
+        <div class="row">
+          <label class="toggle-label" title="Автоматическое удержание кнопки">
+            <span>Autohold</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="chkAutoHold">
+              <span class="slider"></span>
+            </div>
+          </label>
+          <span class="badge" id="saveStatus">autosave: on</span>
+          <span class="badge" id="versionBadge">v3.0</span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="grid" style="margin-bottom:12px;">
+          <div class="stat">
+            <div class="k">Энергия</div>
+            <div class="v" id="energy">0</div>
+            <div class="s">основной ресурс</div>
+          </div>
+          <div class="stat">
+            <div class="k">За клик</div>
+            <div class="v" id="perClick">1</div>
+            <div class="s">модификаторы учитываются</div>
+          </div>
+          <div class="stat">
+            <div class="k">Авто / сек</div>
+            <div class="v" id="perSec">0</div>
+            <div class="s">пассивный доход</div>
+          </div>
+          <div class="stat">
+            <div class="k">Множитель</div>
+            <div class="v" id="mult">x1.00</div>
+            <div class="s">общий бонус</div>
+          </div>
+        </div>
+
+        <div class="click-area">
+          <div class="orb-wrap">
+            <div class="ring"></div>
+            <div class="ring ring2"></div>
+            <button class="orb" id="orb" aria-label="Кликнуть по ядру"></button>
+          </div>
+          <div class="hint">
+            ЛКМ/тап по ядру. Удержание тоже работает (с ограничением).<br/>
+            Включи <b>Autohold</b>, чтобы кликать автоматически.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: shop & achievements -->
+    <aside style="display:flex; flex-direction:column; gap:14px;">
+        <!-- PRESTIGE SHOP (Hidden Default) -->
+        <section class="card" style="display:none; border-color: rgba(124,92,255,.4);">
+            <div class="card-header">
+                <p class="card-title" style="color:#bfaeff; text-shadow:0 0 10px rgba(124,92,255,.4)">Магазин Темной Материи</p>
+                <div class="row">
+                    <span class="badge" style="background:#3d2c8d">Prestige</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="shop" id="prestigeShop"></div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <p class="card-title">Магазин</p>
+                <div class="row">
+                    <label class="toggle-label" title="Автоматическая покупка улучшений">
+                        <span>AutoBuy</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="chkAutoBuy">
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+                    <button id="btnBuyMax" class="btn-accent" title="Покупать максимум доступного (по 1 предмету каждого типа)">Buy Max</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="shop" id="shop"></div>
+                <div style="margin-top:12px" class="row">
+                <span class="small">Подсказка: цены растут экспоненциально. Это нормально для кликеров.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Achievements Section -->
+        <section class="card">
+            <div class="card-header">
+                <p class="card-title">Достижения</p>
+            </div>
+            <div class="card-body">
+                <div id="achievementsPanel" class="ach-list"></div>
+            </div>
+        </section>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Scripts (Ordered, Non-Module) -->
+  <script src="js/utils.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

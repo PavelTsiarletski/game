@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <title>Planet Creator</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Specific overrides for Planet Creator */
+    canvas#planet-render {
+      width: 300px;
+      height: 300px;
+      margin: 0 auto;
+      display: block;
+      transition: filter 0.3s;
+    }
+    .stage-badge {
+      background: var(--accent2);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+    .back-btn {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .back-btn:hover { color: white; }
+  </style>
+</head>
+<body>
+  <div id="stars-bg"></div> <!-- Separate starfield logic or reuse? We'll reuse the style.css one but need JS -->
+
+  <header>
+    <div class="title">
+      <a href="index.html" class="back-btn">← Меню</a>
+      <div style="width:1px;height:20px;background:var(--border);margin:0 10px;"></div>
+      <h1>Planet Creator</h1>
+    </div>
+    <div class="actions">
+      <button id="btnSave" title="Сохранить">Save</button>
+      <button id="btnReset" class="btn-danger" title="Сбросить">Reset</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left: Planet View -->
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <p class="card-title">Прото-планета</p>
+        </div>
+        <div class="row">
+           <span class="stage-badge" id="stageBadge">Stage 1: Dust</span>
+        </div>
+      </div>
+
+      <div class="card-body" style="text-align:center;">
+        <canvas id="planet-render" width="600" height="600"></canvas>
+        <div class="hint" style="margin-top:20px">
+          Собирайте материю, чтобы сформировать ядро.<br/>
+          Кликайте по планете или покупайте авто-сборщики.
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Stats & Upgrades -->
+    <aside style="display:flex; flex-direction:column; gap:14px;">
+      <section class="card">
+         <div class="card-body">
+            <div class="grid">
+              <div class="stat">
+                <div class="k">Материя</div>
+                <div class="v" id="matter">0</div>
+                <div class="s">строительный ресурс</div>
+              </div>
+              <div class="stat">
+                <div class="k">Плотность / сек</div>
+                <div class="v" id="perSec">0</div>
+              </div>
+            </div>
+         </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <p class="card-title">Эволюция</p>
+        </div>
+        <div class="card-body">
+          <div class="shop" id="shop"></div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script> <!-- Reuse utils -->
+  <script src="js/planet/config.js"></script>
+  <script src="js/planet/state.js"></script>
+  <script src="js/planet/renderer.js"></script>
+  <script src="js/planet/core.js"></script>
+  <script src="js/planet/ui.js"></script>
+  <script src="js/planet/main.js"></script>
+</body>
+</html>
