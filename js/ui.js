@@ -121,20 +121,58 @@ window.Game.UI = (function(){
 
     function renderShop(state, onBuy){
         const Core = window.Game.Core;
-        ui.shop.innerHTML = "";
+        // Ensure shop container exists
+        if(!ui.shop) return;
+
+        // Loop through upgrades
         for (const def of upgrades){
             const lvl = Core.getUpgradeLevel(state, def.id);
             const next = Core.getNextCost(state, def.id);
             const canBuy = state.energy >= next;
+            
+            // ID for the DOM element
+            const domId = `shop-item-${def.id}`;
+            let el = document.getElementById(domId);
 
-            const el = createShopItem(
-                def.name, def.badge, def.desc, 
-                `Ур.: ${lvl} • ${def.effectText(lvl)}`,
-                `Цена: ${fmt(next)}`,
-                canBuy,
-                () => onBuy(def.id)
-            );
-            ui.shop.appendChild(el);
+            const metaText = `Ур.: ${lvl} • ${def.effectText(lvl)}`;
+            const priceText = `Цена: ${fmt(next)}`;
+
+            if(!el){
+                // Create New
+                el = createShopItem(
+                    def.name, def.badge, def.desc, 
+                    metaText,
+                    priceText,
+                    canBuy,
+                    () => onBuy(def.id)
+                );
+                el.id = domId;
+                ui.shop.appendChild(el);
+            } else {
+                // Update Existing
+                // Structure: item -> [left [name, desc, meta], right [price, btn]]
+                // Name+Badge is usually static, but badge might change? No.
+                
+                // Update Meta (Level/Effect) -- 3rd child of left
+                const left = el.querySelector(".left");
+                if(left && left.children[2]){
+                    if(left.children[2].textContent !== metaText)
+                        left.children[2].textContent = metaText;
+                }
+
+                // Update Price -- 1st child of right
+                const right = el.querySelector(".right");
+                if(right && right.children[0]){
+                    if(right.children[0].textContent !== priceText)
+                        right.children[0].textContent = priceText;
+                }
+
+                // Update Button -- 2nd child of right
+                if(right && right.children[1]){
+                    const btn = right.children[1];
+                    if(btn.disabled !== !canBuy) btn.disabled = !canBuy;
+                }
+            }
         }
     }
 
@@ -146,8 +184,7 @@ window.Game.UI = (function(){
              ui.prestigeShop.parentElement.style.display = "none";
              return;
         }
-        ui.prestigeShop.parentElement.style.display = "flex"; // Ensure container is visible
-        ui.prestigeShop.innerHTML = "";
+        ui.prestigeShop.parentElement.style.display = "flex"; 
 
         const { prestigeUpgrades } = window.Game.Config;
         const Core = window.Game.Core;
@@ -159,16 +196,42 @@ window.Game.UI = (function(){
              const canBuy = !maxed && state.darkMatter >= next;
              
              const priceText = maxed ? "MAX" : `${fmt(next)} ТМ`;
-             
-             const el = createShopItem(
-                 def.name, "PRESTIGE", def.desc,
-                 `Ур.: ${lvl}${def.maxLevel ? '/'+def.maxLevel : ''} • ${def.effectText(lvl)}`,
-                 priceText,
-                 canBuy,
-                 () => onBuy(def.id),
-                 true
-             );
-             ui.prestigeShop.appendChild(el);
+             const metaText = `Ур.: ${lvl}${def.maxLevel ? '/'+def.maxLevel : ''} • ${def.effectText(lvl)}`;
+
+             const domId = `prestige-item-${def.id}`;
+             let el = document.getElementById(domId);
+
+             if(!el){
+                 // Create
+                 el = createShopItem(
+                     def.name, "PRESTIGE", def.desc,
+                     metaText,
+                     priceText,
+                     canBuy,
+                     () => onBuy(def.id),
+                     true
+                 );
+                 el.id = domId;
+                 ui.prestigeShop.appendChild(el);
+             } else {
+                 // Update
+                 const left = el.querySelector(".left");
+                 // meta is 3rd child
+                 if(left && left.children[2] && left.children[2].textContent !== metaText){
+                     left.children[2].textContent = metaText;
+                 }
+
+                 const right = el.querySelector(".right");
+                 // price is 1st
+                 if(right && right.children[0] && right.children[0].textContent !== priceText){
+                     right.children[0].textContent = priceText;
+                 }
+                 // btn is 2nd
+                 if(right && right.children[1]){
+                     const btn = right.children[1];
+                     if(btn.disabled !== !canBuy) btn.disabled = !canBuy;
+                 }
+             }
         }
     }
 
