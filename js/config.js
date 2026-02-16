@@ -119,6 +119,44 @@ window.Game.Config = (function(){
         }
     ];
 
+    // ---------- Achievement Definitions ----------
+    const achievements = [
+        {
+            id: "energy_1k",
+            name: "Малый накопитель",
+            desc: "Накопить 1,000 Всего Энергии",
+            condition: (state) => state.totalEnergy >= 1000
+        },
+        {
+            id: "energy_1m",
+            name: "Мега-батарея",
+            desc: "Накопить 1,000,000 Всего Энергии",
+            condition: (state) => state.totalEnergy >= 1000000
+        },
+        {
+            id: "click_100",
+            name: "Ручной труд",
+            desc: "Сделать 100 ручных кликов",
+            condition: (state) => state.stats && state.stats.clicks >= 100
+        },
+        {
+            id: "upgrades_10",
+            name: "Технолог",
+            desc: "Купить 10 уровней любых улучшений",
+            condition: (state) => {
+                let total = 0;
+                for(let k in state.upgrades) total += state.upgrades[k];
+                return total >= 10;
+            }
+        },
+        {
+            id: "prestige_1",
+            name: "Перерождение",
+            desc: "Совершить первый сброс ради Темной Материи",
+            condition: (state) => state.darkMatter > 0
+        }
+    ];
+
     // Helper for formatted numbers in config (needed for timeWarp textual description)
     function fmt(n){
          return window.Game.Utils.fmt(n);
