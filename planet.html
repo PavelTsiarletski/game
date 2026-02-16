@@ -32,6 +32,69 @@
       gap: 5px;
     }
     .back-btn:hover { color: white; }
+    
+    /* Large Shop Buttons */
+    .shop-card-large {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 16px;
+        text-align: left;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.1s;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-family: inherit;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .shop-card-large:not(.disabled):active {
+        transform: scale(0.98);
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .shop-card-large.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .card-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .card-title-row .name {
+        font-weight: bold;
+        font-size: 1.1em;
+        color: var(--accent2);
+    }
+    .card-title-row .lvl {
+        font-size: 0.8em;
+        color: var(--muted);
+        background: rgba(0,0,0,0.3);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    .card-desc {
+        font-size: 0.9em;
+        color: #8fa3bf;
+    }
+    .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 4px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .card-footer .price {
+        font-weight: bold;
+        color: #ffda79;
+    }
+    .card-footer .bonus {
+        font-size: 0.9em;
+        color: #4cd137;
+    }
   </style>
 </head>
 <body>

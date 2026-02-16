@@ -28,58 +28,73 @@ window.Game.PlanetRenderer = (function(){
 
         const cx = width / 2;
         const cy = height / 2;
+        const time = Date.now() * 0.001;
         
-        // Background particles (Always visible but more subtle if planet exists)
+        // Background particles
         ctx.fillStyle = "#ffffff";
         for(let p of particles){
-            ctx.globalAlpha = (stage.id === 'nebula') ? (0.3 + Math.random()*0.2) : 0.1;
+            // Nebula/Space effect
+            ctx.globalAlpha = (stage.id === 'nebula') ? (0.3 + Math.sin(time + p.x)*0.2) : 0.1;
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.s, 0, Math.PI*2);
             ctx.fill();
             
-            // Move
             p.x += p.vx;
             p.y += p.vy;
-            // Wrap
             if(p.x < 0) p.x = width;
             if(p.x > width) p.x = 0;
             if(p.y < 0) p.y = height;
             if(p.y > height) p.y = 0;
         }
 
-        // Draw Planet Logic
-        const planetColor = stage.color;
+        // --- STAGE RENDERING ---
         
         if(stage.id === 'nebula'){
-             // Draw swirling core based on matter
-             const coreSize = Math.min(50, state.totalMatter / 10 + 5);
-             
-             const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreSize * 2);
-             grad.addColorStop(0, planetColor);
+             // Swirling Nebula Cloud
+             const coreSize = Math.min(60, state.totalMatter / 10 + 10);
+             const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreSize * 3);
+             grad.addColorStop(0, stage.color);
+             grad.addColorStop(0.4, "rgba(108, 92, 231, 0.2)");
              grad.addColorStop(1, "transparent");
              
-             ctx.globalAlpha = 0.6;
+             ctx.globalAlpha = 0.8;
              ctx.fillStyle = grad;
              ctx.beginPath();
-             ctx.arc(cx, cy, coreSize * 2, 0, Math.PI*2);
+             ctx.arc(cx, cy, coreSize * 3, 0, Math.PI*2);
              ctx.fill();
              
-             if(state.totalMatter > 100){
-                 ctx.globalAlpha = 1;
-                 ctx.fillStyle = "#fff";
-                 ctx.beginPath();
-                 ctx.arc(cx, cy, coreSize * 0.2, 0, Math.PI*2);
-                 ctx.fill();
-             }
+             // Core glow
+             ctx.fillStyle = "#fff";
+             ctx.globalAlpha = 0.5 + Math.sin(time*3)*0.2;
+             ctx.beginPath();
+             ctx.arc(cx, cy, coreSize * 0.2, 0, Math.PI*2);
+             ctx.fill();
 
-        } else {
-            // Planet Formed
-            let radius = 80;
-            // Grow slightly with upgrades?
+        } else if (stage.id === 'planetesimal') {
+            // Clumpy Rock Field
+            const radius = 60;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(time * 0.2);
             
-            // Halo/Atmosphere
+            ctx.fillStyle = stage.color;
+            for(let i=0; i<8; i++){
+                const ang = (i / 8) * Math.PI * 2;
+                const dist = 30 + Math.sin(time + i)*10;
+                const s = 15 + Math.cos(time*2 + i)*5;
+                ctx.beginPath();
+                ctx.arc(Math.cos(ang)*dist, Math.sin(ang)*dist, s, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.restore();
+            
+        } else {
+            // SPHERICAL PLANET STAGES
+            let radius = 100;
+            
+            // 1. Atmosphere Halo (common)
             const glow = ctx.createRadialGradient(cx, cy, radius * 0.8, cx, cy, radius * 1.5);
-            glow.addColorStop(0, planetColor);
+            glow.addColorStop(0, stage.color);
             glow.addColorStop(1, "transparent");
             
             ctx.globalAlpha = 0.4;
@@ -88,18 +103,71 @@ window.Game.PlanetRenderer = (function(){
             ctx.arc(cx, cy, radius * 1.5, 0, Math.PI*2);
             ctx.fill();
             
-            // Planet Body
+            // 2. Base Planet Body
             ctx.globalAlpha = 1;
-            ctx.fillStyle = planetColor;
-            ctx.beginPath();
-            ctx.arc(cx, cy, radius, 0, Math.PI*2);
-            ctx.fill();
+            ctx.fillStyle = stage.color;
             
-            // Simple Shadow
-            const shadow = ctx.createRadialGradient(cx - 30, cy - 30, radius * 0.2, cx, cy, radius);
+            // Texture/Pattern based on stage
+            if(stage.id === 'proto' || stage.id === 'differentiation' || stage.id === 'volcanism'){
+                // Magma/Lava
+                ctx.fillStyle = "#2d3436"; // Dark rock base
+                ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI*2); ctx.fill();
+                
+                // Lava Cracks
+                ctx.save();
+                ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI*2); ctx.clip();
+                
+                ctx.strokeStyle = "#e17055";
+                ctx.lineWidth = 4;
+                for(let i=0; i<10; i++){
+                    ctx.beginPath();
+                    ctx.moveTo(cx - radius + Math.random()*radius*2, cy - radius + Math.random()*radius*2);
+                    ctx.lineTo(cx - radius + Math.random()*radius*2, cy - radius + Math.random()*radius*2);
+                    ctx.stroke();
+                }
+                ctx.restore();
+                
+            } else if (stage.id === 'ocean' || stage.id === 'life' || stage.id === 'atmosphere') {
+                // Ocean base
+                ctx.fillStyle = "#0984e3";
+                ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI*2); ctx.fill();
+                
+                // Continents (Green for life, Brown/Grey otherwise)
+                const landColor = (stage.id === 'life') ? '#2ecc71' : '#b2bec3';
+                
+                ctx.save();
+                ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI*2); ctx.clip();
+                
+                ctx.fillStyle = landColor;
+                // Simple blobs for continents
+                ctx.beginPath();
+                ctx.arc(cx - 30, cy - 20, 40, 0, Math.PI*2);
+                ctx.arc(cx + 40, cy + 30, 35, 0, Math.PI*2);
+                ctx.fill();
+                
+                // Clouds for Atmosphere
+                if(stage.id === 'atmosphere' || stage.id === 'life'){
+                    ctx.fillStyle = "rgba(255,255,255,0.4)";
+                    ctx.translate(Math.sin(time*0.1)*20, 0); // Moving clouds
+                    ctx.beginPath();
+                    ctx.arc(cx - 50, cy - 40, 25, 0, Math.PI*2);
+                    ctx.arc(cx + 10, cy + 10, 30, 0, Math.PI*2);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+                
+            } else {
+                 // Default Solid (Crust)
+                 ctx.fillStyle = stage.color;
+                 ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI*2); ctx.fill();
+            }
+
+            // 3. Shadow (Lighting)
+            const shadow = ctx.createRadialGradient(cx - 40, cy - 40, radius * 0.5, cx, cy, radius);
             shadow.addColorStop(0, "rgba(255,255,255,0.1)");
             shadow.addColorStop(0.5, "transparent");
-            shadow.addColorStop(1, "rgba(0,0,0,0.8)");
+            shadow.addColorStop(1, "rgba(0,0,0,0.85)");
             
             ctx.fillStyle = shadow;
             ctx.beginPath();

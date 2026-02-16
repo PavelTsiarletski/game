@@ -23,7 +23,8 @@ window.Game.PlanetUI = (function(){
         Renderer.init(ui.planetCanvas);
         
         // Listeners
-        ui.planetCanvas.addEventListener("click", onPlanetClick);
+        // ui.planetCanvas.addEventListener("click", onPlanetClick); // Removed manual click
+        
         ui.btnSave.addEventListener("click", () => {
              save(state);
              showToast("Saved!");
@@ -47,6 +48,7 @@ window.Game.PlanetUI = (function(){
         lastTime = now;
         
         const prod = getProduction(state);
+        // Only auto production
         if(prod.auto > 0){
              state.matter += prod.auto * dt;
              state.totalMatter += prod.auto * dt;
@@ -58,98 +60,60 @@ window.Game.PlanetUI = (function(){
         requestAnimationFrame(loop);
     }
     
-    function onPlanetClick(e){
-        // Get Click Power
-        const prod = getProduction(state);
-        state.matter += prod.click;
-        state.totalMatter += prod.click;
-        
-        // Determine position: e.clientX/Y are global, we might want relative to canvas
-        // But the canvas is centered, so global is fine for fixed-position overlay?
-        // Actually, let's just append absolute divs to body or a wrapper
-        const rect = ui.planetCanvas.getBoundingClientRect();
-        // Randomize slightly around center or click pos
-        // visual pos:
-        const x = e.clientX || (rect.left + rect.width/2);
-        const y = e.clientY || (rect.top + rect.height/2);
-
-        createFloatingText(x, y, `+${Math.floor(prod.click)}`);
-        
-        updateUI();
-    }
-    
-    function createFloatingText(x, y, text){
-        const el = document.createElement("div");
-        el.textContent = text;
-        el.style.position = "fixed";
-        el.style.left = x + "px";
-        el.style.top = y + "px";
-        el.style.color = "#fff";
-        el.style.fontWeight = "bold";
-        el.style.fontSize = "16px";
-        el.style.pointerEvents = "none";
-        el.style.userSelect = "none";
-        el.style.textShadow = "0 2px 4px rgba(0,0,0,0.5)";
-        el.style.transition = "transform 1s ease-out, opacity 1s ease-out";
-        el.style.zIndex = "100";
-        
-        document.body.appendChild(el);
-        
-        // Animate
-        requestAnimationFrame(() => {
-            el.style.transform = `translate(-50%, -100px)`; // Move up
-            el.style.opacity = "0";
-        });
-        
-        // Remove
-        setTimeout(() => {
-            if(el.parentNode) el.parentNode.removeChild(el);
-        }, 1000);
-    }
+    // function onPlanetClick(e){ ... } // Removed
     
     function updateUI(){
-        ui.matter.textContent = Math.floor(state.matter).toLocaleString();
-        ui.perSec.textContent = getProduction(state).auto.toFixed(1);
+        // Use global Utils.fmt if available, or fallback
+        const fmt = window.Game.Utils ? window.Game.Utils.fmt : (n) => n.toFixed(0);
+        
+        ui.matter.textContent = fmt(state.matter);
+        ui.perSec.textContent = fmt(getProduction(state).auto) + "/s";
         
         const stage = getCurrentStage(state);
         ui.stageBadge.textContent = `Stage: ${stage.name}`;
         ui.stageBadge.style.backgroundColor = stage.color;
         
         // Check shop buttons
-        renderShop(); // Refresh buttons state
+        renderShop(); 
     }
     
     function renderShop(){
-        // Simple rebuild for now, optimization later if needed
         ui.shop.innerHTML = "";
+        const fmt = window.Game.Utils ? window.Game.Utils.fmt : (n) => n.toFixed(0);
         
         for(const u of upgrades){
             const lvl = getUpgradeLevel(state, u.id);
             const cost = getCost(u.id, lvl);
             const canBuy = state.matter >= cost;
             
-            const item = document.createElement("div");
-            item.className = "shop-item";
-            item.innerHTML = `
-                <div class="left">
+            // Create a large button card
+            const btn = document.createElement("button");
+            btn.className = `shop-card-large ${canBuy ? '' : 'disabled'}`;
+            btn.disabled = !canBuy;
+            
+            // Content
+            btn.innerHTML = `
+                <div class="card-title-row">
                     <span class="name">${u.name}</span>
-                    <span class="desc">${u.desc}</span>
-                    <span class="meta">Lvl ${lvl} • Bonus: ${u.type === 'click' ? '+' : ''}${u.effect(lvl).toFixed(1)}</span>
+                    <span class="lvl">Lvl ${lvl}</span>
                 </div>
-                <div class="right">
-                    <div class="price">${cost.toLocaleString()}</div>
-                    <button class="btn ${canBuy ? '' : 'disabled'}" ${!canBuy ? 'disabled' : ''}>Buy</button>
+                <div class="card-desc">${u.desc}</div>
+                <div class="card-footer">
+                    <span class="bonus">+${fmt(u.effect(lvl))}/s</span>
+                    <span class="price">${cost === 0 ? 'FREE' : fmt(cost)}</span>
                 </div>
             `;
             
-            const btn = item.querySelector("button");
             btn.onclick = () => {
                 if(buyUpgrade(state, u.id)){
-                    renderShop(); // Update costs
+                    // Visual feedback
+                    btn.classList.add("bought");
+                    setTimeout(()=>btn.classList.remove("bought"), 100);
+                    renderShop(); 
                 }
             };
             
-            ui.shop.appendChild(item);
+            ui.shop.appendChild(btn);
         }
     }
 
