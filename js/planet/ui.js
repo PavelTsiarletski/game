@@ -78,7 +78,6 @@ window.Game.PlanetUI = (function(){
     }
     
     function renderShop(){
-        ui.shop.innerHTML = "";
         const fmt = window.Game.Utils ? window.Game.Utils.fmt : (n) => n.toFixed(0);
         
         for(const u of upgrades){
@@ -86,13 +85,35 @@ window.Game.PlanetUI = (function(){
             const cost = getCost(u.id, lvl);
             const canBuy = state.matter >= cost;
             
-            // Create a large button card
-            const btn = document.createElement("button");
-            btn.className = `shop-card-large ${canBuy ? '' : 'disabled'}`;
-            btn.disabled = !canBuy;
+            let btn = document.getElementById(`btn-upg-${u.id}`);
             
-            // Content
-            btn.innerHTML = `
+            if(!btn){
+                // Create new
+                btn = document.createElement("button");
+                btn.id = `btn-upg-${u.id}`;
+                btn.className = `shop-card-large`;
+                
+                // Static connection (only needs to happen once)
+                btn.onclick = () => {
+                    if(buyUpgrade(state, u.id)){
+                        // Visual feedback
+                        btn.classList.add("bought");
+                        setTimeout(()=>btn.classList.remove("bought"), 100);
+                        renderShop(); 
+                    }
+                };
+                
+                ui.shop.appendChild(btn);
+            }
+            
+            // Update State/Content
+            const currentClass = `shop-card-large ${canBuy ? '' : 'disabled'}`;
+            if(btn.className !== currentClass) btn.className = currentClass;
+            btn.disabled = !canBuy;
+
+            // Efficient innerHTML update (or we could update specific spans for more speed)
+            // For now, full innerHTML is fine as long as the ELEMENT itself isn't replaced.
+            const html = `
                 <div class="card-title-row">
                     <span class="name">${u.name}</span>
                     <span class="lvl">Lvl ${lvl}</span>
@@ -104,16 +125,7 @@ window.Game.PlanetUI = (function(){
                 </div>
             `;
             
-            btn.onclick = () => {
-                if(buyUpgrade(state, u.id)){
-                    // Visual feedback
-                    btn.classList.add("bought");
-                    setTimeout(()=>btn.classList.remove("bought"), 100);
-                    renderShop(); 
-                }
-            };
-            
-            ui.shop.appendChild(btn);
+            if(btn.innerHTML !== html) btn.innerHTML = html;
         }
     }
 
