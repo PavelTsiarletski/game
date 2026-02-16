@@ -10,6 +10,7 @@ window.Game.PlanetCore = (function(){
     function getCost(id, level){
         const def = Config.upgrades.find(u => u.id === id);
         if(!def) return 999999999;
+        if(def.freeFirst && level === 0) return 0;
         return Math.floor(def.baseCost * Math.pow(def.growth, level));
     }
 
@@ -19,13 +20,25 @@ window.Game.PlanetCore = (function(){
         const def = Config.upgrades.find(u => u.id === id);
         if(!def) return 0;
         
+        let effectiveLevel = level;
+        let effectiveCount = count;
+        let costSoFar = 0;
+
+        // Handle free first level
+        if(def.freeFirst && effectiveLevel === 0){
+             effectiveCount--;
+             effectiveLevel++;
+             // costSoFar += 0;
+             if(effectiveCount <= 0) return 0;
+        }
+        
         // Initial cost at current level
-        const startCost = def.baseCost * Math.pow(def.growth, level);
+        const startCost = def.baseCost * Math.pow(def.growth, effectiveLevel);
         
-        if (def.growth === 1) return Math.floor(startCost * count);
+        if (def.growth === 1) return Math.floor(costSoFar + startCost * effectiveCount);
         
-        const total = startCost * (Math.pow(def.growth, count) - 1) / (def.growth - 1);
-        return Math.floor(total);
+        const total = startCost * (Math.pow(def.growth, effectiveCount) - 1) / (def.growth - 1);
+        return Math.floor(costSoFar + total);
     }
     
     // Inverse Geometric Series
@@ -33,18 +46,23 @@ window.Game.PlanetCore = (function(){
         const def = Config.upgrades.find(u => u.id === id);
         if(!def) return 0;
         
-        const startCost = def.baseCost * Math.pow(def.growth, level);
-        if(startCost > matter) return 0;
+        let effectiveLevel = level;
+        let extraCount = 0;
         
-        if (def.growth === 1) return Math.floor(matter / startCost);
+        if(def.freeFirst && effectiveLevel === 0){
+            extraCount = 1; // Can definitely buy the free one
+            effectiveLevel++;
+            // cost is 0, matter unchanged
+        }
         
-        // matter = startCost * (growth^k - 1) / (growth - 1)
-        // matter * (growth - 1) / startCost = growth^k - 1
-        // k = log_growth ( 1 + matter * (growth - 1) / startCost )
+        const startCost = def.baseCost * Math.pow(def.growth, effectiveLevel);
+        if(startCost > matter) return extraCount; // Can only buy the free one (if applicable) and no more
+        
+        if (def.growth === 1) return Math.floor(extraCount + matter / startCost);
         
         const term = 1 + (matter * (def.growth - 1) / startCost);
         const k = Math.log(term) / Math.log(def.growth);
-        return Math.floor(k);
+        return Math.floor(extraCount + k);
     }
 
     function buyUpgrade(state, id, count = 1){

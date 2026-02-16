@@ -68,7 +68,8 @@ window.Game.PlanetConfig = (function(){
             id: "electrostatic",
             name: "Electrostatic Forces",
             type: "auto",
-            baseCost: 0, // First one is free to start the loop
+            baseCost: 15, 
+            freeFirst: true, // First level is free, then costs 15*growth
             growth: 1.5,
             desc: "Dust grains stick together automatically.",
             effect: (lvl) => (lvl + 1) * 1 // Base income
