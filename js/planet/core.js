@@ -13,12 +13,47 @@ window.Game.PlanetCore = (function(){
         return Math.floor(def.baseCost * Math.pow(def.growth, level));
     }
 
-    function buyUpgrade(state, id){
+    // Geometric Series Sum: Cost * (1 - growth^k) / (1 - growth)
+    function getBulkCost(id, level, count){
+        if(count <= 0) return 0;
+        const def = Config.upgrades.find(u => u.id === id);
+        if(!def) return 0;
+        
+        // Initial cost at current level
+        const startCost = def.baseCost * Math.pow(def.growth, level);
+        
+        if (def.growth === 1) return Math.floor(startCost * count);
+        
+        const total = startCost * (Math.pow(def.growth, count) - 1) / (def.growth - 1);
+        return Math.floor(total);
+    }
+    
+    // Inverse Geometric Series
+    function getMaxBuyable(id, level, matter){
+        const def = Config.upgrades.find(u => u.id === id);
+        if(!def) return 0;
+        
+        const startCost = def.baseCost * Math.pow(def.growth, level);
+        if(startCost > matter) return 0;
+        
+        if (def.growth === 1) return Math.floor(matter / startCost);
+        
+        // matter = startCost * (growth^k - 1) / (growth - 1)
+        // matter * (growth - 1) / startCost = growth^k - 1
+        // k = log_growth ( 1 + matter * (growth - 1) / startCost )
+        
+        const term = 1 + (matter * (def.growth - 1) / startCost);
+        const k = Math.log(term) / Math.log(def.growth);
+        return Math.floor(k);
+    }
+
+    function buyUpgrade(state, id, count = 1){
         const level = getUpgradeLevel(state, id);
-        const cost = getCost(id, level);
+        const cost = getBulkCost(id, level, count);
+        
         if(state.matter >= cost){
             state.matter -= cost;
-            state.upgrades[id] = level + 1;
+            state.upgrades[id] = level + count;
             return true;
         }
         return false;
@@ -53,6 +88,6 @@ window.Game.PlanetCore = (function(){
         return current;
     }
 
-    return { getUpgradeLevel, getCost, buyUpgrade, getProduction, getCurrentStage };
+    return { getUpgradeLevel, getCost, getBulkCost, getMaxBuyable, buyUpgrade, getProduction, getCurrentStage };
 
 })();

@@ -95,6 +95,30 @@
         font-size: 0.9em;
         color: #4cd137;
     }
+    
+    .btn-group {
+        display: flex;
+        gap: 2px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 6px;
+        padding: 2px;
+    }
+    .btn-small {
+        background: transparent;
+        border: none;
+        color: rgba(255,255,255,0.5);
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .btn-small:hover { color: #fff; }
+    .btn-small.active {
+        background: var(--accent);
+        color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
   </style>
 </head>
 <body>
@@ -154,6 +178,13 @@
       <section class="card">
         <div class="card-header">
           <p class="card-title">Эволюция</p>
+          <div class="row">
+             <div class="btn-group">
+                <button class="btn-small active" id="btn-x1">1x</button>
+                <button class="btn-small" id="btn-x10">10x</button>
+                <button class="btn-small" id="btn-max">Max</button>
+             </div>
+          </div>
         </div>
         <div class="card-body">
           <div class="shop" id="shop"></div>

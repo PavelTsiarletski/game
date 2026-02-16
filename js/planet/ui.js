@@ -2,7 +2,7 @@ window.Game = window.Game || {};
 
 window.Game.PlanetUI = (function(){
     const { load, save, reset } = window.Game.PlanetState;
-    const { getProduction, buyUpgrade, getUpgradeLevel, getCost, getCurrentStage } = window.Game.PlanetCore;
+    const { getProduction, buyUpgrade, getUpgradeLevel, getCost, getBulkCost, getMaxBuyable, getCurrentStage } = window.Game.PlanetCore;
     const { upgrades } = window.Game.PlanetConfig;
     const Renderer = window.Game.PlanetRenderer;
 
@@ -14,10 +14,16 @@ window.Game.PlanetUI = (function(){
         planetCanvas: document.getElementById("planet-render"),
         btnSave: document.getElementById("btnSave"),
         btnReset: document.getElementById("btnReset"),
-        toast: document.getElementById("toast")
+        toast: document.getElementById("toast"),
+        
+        // Multipliers
+        btnX1: document.getElementById("btn-x1"),
+        btnX10: document.getElementById("btn-x10"),
+        btnMax: document.getElementById("btn-max")
     };
 
     let state = load();
+    let buyAmount = 1; // 1, 10, or "max"
 
     function init(){
         Renderer.init(ui.planetCanvas);
@@ -30,6 +36,21 @@ window.Game.PlanetUI = (function(){
              showToast("Saved!");
         });
         ui.btnReset.addEventListener("click", () => reset());
+        
+        // Multiplier Toggles
+        const setMult = (amt, btn) => {
+            buyAmount = amt;
+            // updating classes
+            ui.btnX1.className = "btn-small";
+            ui.btnX10.className = "btn-small";
+            ui.btnMax.className = "btn-small";
+            btn.className = "btn-small active";
+            renderShop();
+        };
+        
+        ui.btnX1.addEventListener("click", () => setMult(1, ui.btnX1));
+        ui.btnX10.addEventListener("click", () => setMult(10, ui.btnX10));
+        ui.btnMax.addEventListener("click", () => setMult("max", ui.btnMax));
         
         // Auto-Save
         setInterval(() => save(state), 30000);
@@ -82,9 +103,30 @@ window.Game.PlanetUI = (function(){
         
         for(const u of upgrades){
             const lvl = getUpgradeLevel(state, u.id);
-            const cost = getCost(u.id, lvl);
+            
+            // Determine how many we are trying to buy
+            let count = 1;
+            let cost = 0;
+            
+            if(buyAmount === "max"){
+                 const max = getMaxBuyable(u.id, lvl, state.matter);
+                 count = Math.max(1, max); // Always show at least next 1 cost if max is 0
+                 cost = getBulkCost(u.id, lvl, count);
+            } else {
+                 count = buyAmount;
+                 cost = getBulkCost(u.id, lvl, count);
+            }
+
             const canBuy = state.matter >= cost;
             
+            // Special case for Max: if we can't afford even 1, cost handles it but let's be clean
+            // actually logic is: if max=0, we show cost for 1 but disable it
+            if(buyAmount === 'max' && cost === 0){
+                 // We can't afford any. Show cost for 1.
+                 count = 1;
+                 cost = getBulkCost(u.id, lvl, 1);
+            }
+
             let btn = document.getElementById(`btn-upg-${u.id}`);
             
             if(!btn){
@@ -95,7 +137,16 @@ window.Game.PlanetUI = (function(){
                 
                 // Static connection (only needs to happen once)
                 btn.onclick = () => {
-                    if(buyUpgrade(state, u.id)){
+                     // Re-calculate count at click time to be safe/consistent
+                     const clickLvl = getUpgradeLevel(state, u.id);
+                     let clickCount = 1;
+                     if(buyAmount === "max"){
+                         clickCount = Math.max(1, getMaxBuyable(u.id, clickLvl, state.matter));
+                     } else {
+                         clickCount = buyAmount;
+                     }
+                     
+                    if(buyUpgrade(state, u.id, clickCount)){
                         // Visual feedback
                         btn.classList.add("bought");
                         setTimeout(()=>btn.classList.remove("bought"), 100);
@@ -113,6 +164,12 @@ window.Game.PlanetUI = (function(){
 
             // Efficient innerHTML update (or we could update specific spans for more speed)
             // For now, full innerHTML is fine as long as the ELEMENT itself isn't replaced.
+            
+            // Effect diff
+            const currentEffect = u.effect(lvl);
+            const newEffect = u.effect(lvl + count);
+            const diff = newEffect - currentEffect;
+            
             const html = `
                 <div class="card-title-row">
                     <span class="name">${u.name}</span>
@@ -120,8 +177,8 @@ window.Game.PlanetUI = (function(){
                 </div>
                 <div class="card-desc">${u.desc}</div>
                 <div class="card-footer">
-                    <span class="bonus">+${fmt(u.effect(lvl))}/s</span>
-                    <span class="price">${cost === 0 ? 'FREE' : fmt(cost)}</span>
+                    <span class="bonus">+${fmt(diff)}/s <span style="font-size:0.8em; opacity:0.7">(x${count})</span></span>
+                    <span class="price">${cost === 0 && lvl===0 ? 'FREE' : fmt(cost)}</span>
                 </div>
             `;
             
