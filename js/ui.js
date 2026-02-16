@@ -20,6 +20,7 @@ window.Game.UI = (function(){
         btnReset: $("btnReset"), // This will be dynamic (Reset vs Prestige)
         btnBuyMax: $("btnBuyMax"),
         chkAutoHold: $("chkAutoHold"),
+        chkAutoBuy: $("chkAutoBuy"), // New
         achievementsPanel: $("achievementsPanel"),
         prestigeShop: $("prestigeShop")
     };

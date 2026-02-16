@@ -180,6 +180,14 @@ window.Game.Main = (function(){
         updateUI();
     });
 
+    if(ui.chkAutoBuy){
+        ui.chkAutoBuy.addEventListener("change", (e) => {
+            state.autoBuy = e.target.checked;
+            saveState(state);
+        });
+        ui.chkAutoBuy.checked = state.autoBuy;
+    }
+
     // Ticking
     setInterval(() => {
         const t = now();
@@ -193,6 +201,26 @@ window.Game.Main = (function(){
                 state.energy += add;
                 state.totalEnergy += add;
             }
+        }
+        
+        // AutoBuy Logic (Every tick? Maybe too fast. Let's do it every 4 ticks aka 1 sec)
+        // Or just let it run. It checks 'canBuy' which is cheap-ish.
+        if(state.autoBuy && state.energy > 0){
+             // Strategy: Buy CHEAPEST available? or Buy ANY available?
+             // Simple greedy: Iterate all, buy if can.
+             // Better greedy: Find cheapest upgrade that we can afford, buy it. Repeat.
+             // Even better: Just try to buy cheapest first.
+             
+             // Let's iterate upgrades sorted by cost? No, that's heavy.
+             // Just standard loop is fine.
+             for(const def of upgrades){
+                 if(state.energy >= getNextCost(state, def.id)){
+                     try {
+                         // Silent buy (no toast unless error)
+                         buyUpgrade(state, def.id, 1);
+                     } catch(e){}
+                 }
+             }
         }
         
         state.lastTick = t;

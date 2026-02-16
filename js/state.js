@@ -32,6 +32,7 @@ window.Game.State = (function(){
             resets: 0
         },
         autoHold: false,
+        autoBuy: false, // New
         lastTick: now()
     });
 
