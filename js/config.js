@@ -36,9 +36,14 @@ window.Game.Config = (function(){
 
         // Drones: 0.6% of base production per level
         // Formula: base * (dronesLvl * 0.006)
-        const droneBonus = baseProduction * (dronesLvl * 0.006);
+        // Drones: 0.6% compound interest per level
+        // Formula: base * (1.006 ^ lvl) - base
+        // Or total = base * (1.006 ^ lvl)
+        const droneMultiplier = Math.pow(1.006, dronesLvl);
+        const totalProduction = baseProduction * droneMultiplier;
         
-        return baseProduction + droneBonus;
+        // Bonus is the difference (can be negative? No.)
+        return totalProduction - baseProduction + baseProduction; // = totalProduction if we replace the whole return
     }
 
     function critChance(capLvl){
@@ -70,10 +75,10 @@ window.Game.Config = (function(){
             id: "drones",
             name: "Дроны-добытчики",
             badge: "auto %",
-            desc: "Усиливают остальную добычу на 0.6% за уровень.",
+            desc: "Усиливают добычу на 0.6% (сложный процент).",
             baseCost: 100,
             growth: 1.25,
-            effectText: (lvl) => `Бонус: +${(lvl * 0.6).toFixed(1)}%`,
+            effectText: (lvl) => `Множитель: x${Math.pow(1.006, lvl).toFixed(2)}`,
         },
         {
             id: "miner",
