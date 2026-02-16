@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Galaxy Clicker (mini)</title>
+  <style>
+    :root{
+      --bg:#070814;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.08);
+      --text:#e9ecff;
+      --muted:rgba(233,236,255,.7);
+      --accent:#7c5cff;
+      --accent2:#29d3ff;
+      --good:#39d98a;
+      --bad:#ff5c7a;
+      --border:rgba(255,255,255,.12);
+      --shadow:0 18px 45px rgba(0,0,0,.45);
+      --radius:16px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      color:var(--text);
+      background: radial-gradient(1200px 700px at 70% 20%, rgba(124,92,255,.25), transparent 55%),
+                  radial-gradient(900px 600px at 25% 70%, rgba(41,211,255,.18), transparent 60%),
+                  var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* Starfield canvas behind everything */
+    #stars{
+      position:fixed;
+      inset:0;
+      z-index:-1;
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    header{
+      padding:18px 18px 0;
+      max-width:1200px;
+      margin:0 auto;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .title{
+      display:flex;align-items:center;gap:12px;
+    }
+    .logo{
+      width:34px;height:34px;border-radius:12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 10px 22px rgba(124,92,255,.28);
+    }
+    h1{
+      font-size:16px;
+      margin:0;
+      letter-spacing:.4px;
+      font-weight:650;
+    }
+    .sub{
+      margin:0;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .actions{
+      display:flex;gap:10px;align-items:center;
+    }
+    button, .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:650;
+      cursor:pointer;
+      transition: transform .06s ease, border-color .2s ease, background .2s ease, opacity .2s ease;
+      box-shadow: 0 12px 30px rgba(0,0,0,.22);
+      user-select:none;
+    }
+    button:hover{border-color:rgba(255,255,255,.22)}
+    button:active{transform: translateY(1px) scale(.99)}
+    button:disabled{opacity:.45; cursor:not-allowed}
+    .btn-accent{
+      border-color: rgba(124,92,255,.45);
+      background: linear-gradient(180deg, rgba(124,92,255,.35), rgba(124,92,255,.18));
+    }
+    .btn-danger{
+      border-color: rgba(255,92,122,.35);
+      background: linear-gradient(180deg, rgba(255,92,122,.22), rgba(255,92,122,.10));
+    }
+
+    main{
+      max-width:1200px;
+      margin:16px auto 40px;
+      padding:0 18px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .card-header{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .card-title{
+      margin:0;
+      font-size:13px;
+      color:var(--muted);
+      letter-spacing:.35px;
+      text-transform:uppercase;
+    }
+    .card-body{padding:14px}
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+    .stat{
+      background: var(--panel);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:10px 11px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .stat .k{font-size:11px; color:var(--muted)}
+    .stat .v{font-size:15px; font-weight:750; letter-spacing:.2px}
+    .stat .s{font-size:11px; color:rgba(233,236,255,.68)}
+
+    /* Big click area */
+    .click-area{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      align-items:center;
+      justify-content:center;
+      min-height: 360px;
+    }
+    .orb-wrap{
+      width: 230px;
+      height: 230px;
+      position:relative;
+      display:grid;
+      place-items:center;
+    }
+    .orb{
+      width: 200px;
+      height: 200px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:
+        radial-gradient(110px 110px at 35% 30%, rgba(255,255,255,.28), transparent 55%),
+        radial-gradient(160px 160px at 70% 75%, rgba(41,211,255,.26), transparent 55%),
+        radial-gradient(180px 180px at 20% 85%, rgba(124,92,255,.22), transparent 58%),
+        rgba(255,255,255,.06);
+      box-shadow:
+        0 28px 70px rgba(0,0,0,.55),
+        0 0 60px rgba(124,92,255,.25),
+        inset 0 0 40px rgba(255,255,255,.08);
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+      transition: transform .06s ease, filter .2s ease;
+      user-select:none;
+      outline:none;
+    }
+    .orb:hover{filter: brightness(1.06)}
+    .orb:active{transform: scale(.985)}
+    .ring{
+      position:absolute; inset:-26px;
+      border-radius:999px;
+      border:1px dashed rgba(255,255,255,.16);
+      filter: drop-shadow(0 0 16px rgba(41,211,255,.18));
+      animation: spin 18s linear infinite;
+      pointer-events:none;
+    }
+    .ring2{
+      inset:-42px;
+      border-style:solid;
+      border-color: rgba(124,92,255,.16);
+      animation-duration: 28s;
+      opacity:.65;
+    }
+    @keyframes spin{ to{ transform: rotate(360deg);} }
+
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+      text-align:center;
+      max-width: 420px;
+      line-height:1.35;
+    }
+
+    /* Shop */
+    .shop{
+      display:flex;flex-direction:column;gap:10px;
+    }
+    .item{
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.035));
+      border-radius:14px;
+      padding:12px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+    }
+    .item .left{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .item .name{
+      font-weight:750;
+      font-size:13px;
+      display:flex;gap:8px;align-items:center;
+    }
+    .badge{
+      font-size:10px;
+      padding:3px 7px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      color:rgba(233,236,255,.75);
+      background: rgba(255,255,255,.06);
+      flex:0 0 auto;
+    }
+    .item .desc{font-size:11px;color:var(--muted);line-height:1.35}
+    .item .meta{font-size:11px;color:rgba(233,236,255,.75)}
+    .right{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+    .price{font-size:11px;color:rgba(233,236,255,.85)}
+    .small{font-size:11px;color:var(--muted)}
+    .row{
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform: translateX(-50%);
+      background: rgba(10,12,28,.72);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding:10px 12px;
+      box-shadow: 0 18px 45px rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-size:12px;
+      color:rgba(233,236,255,.92);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+
+    /* Floating +x particles */
+    .pop{
+      position:absolute;
+      left:50%; top:50%;
+      transform: translate(-50%,-50%);
+      font-weight:800;
+      font-size:14px;
+      color:rgba(233,236,255,.95);
+      text-shadow: 0 8px 20px rgba(0,0,0,.6);
+      pointer-events:none;
+      opacity:0;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+
+  <header>
+    <div class="title">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>Galaxy Clicker (mini)</h1>
+        <p class="sub">Кликаешь по ядру — получаешь энергию. Покупаешь апгрейды — растёшь.</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btnSave" title="Сохранить вручную">Save</button>
+      <button id="btnReset" class="btn-danger" title="Сбросить прогресс">Reset</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left: gameplay -->
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <p class="card-title">Ядро</p>
+        </div>
+        <div class="row">
+          <span class="badge" id="saveStatus">autosave: on</span>
+          <span class="badge" id="versionBadge">v1</span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="grid" style="margin-bottom:12px;">
+          <div class="stat">
+            <div class="k">Энергия</div>
+            <div class="v" id="energy">0</div>
+            <div class="s">основной ресурс</div>
+          </div>
+          <div class="stat">
+            <div class="k">За клик</div>
+            <div class="v" id="perClick">1</div>
+            <div class="s">модификаторы учитываются</div>
+          </div>
+          <div class="stat">
+            <div class="k">Авто / сек</div>
+            <div class="v" id="perSec">0</div>
+            <div class="s">пассивный доход</div>
+          </div>
+          <div class="stat">
+            <div class="k">Множитель</div>
+            <div class="v" id="mult">x1.00</div>
+            <div class="s">общий бонус</div>
+          </div>
+        </div>
+
+        <div class="click-area">
+          <div class="orb-wrap">
+            <div class="ring"></div>
+            <div class="ring ring2"></div>
+            <button class="orb" id="orb" aria-label="Кликнуть по ядру"></button>
+          </div>
+          <div class="hint">
+            ЛКМ/тап по ядру. Удержание тоже работает (с ограничением).<br/>
+            Прогресс сохраняется в <span class="badge">localStorage</span>.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: shop -->
+    <aside class="card">
+      <div class="card-header">
+        <p class="card-title">Магазин</p>
+        <div class="row">
+          <button id="btnBuyMax" class="btn-accent" title="Покупать максимум доступного (по 1 предмету каждого типа)">Buy Max (1x)</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="shop" id="shop"></div>
+        <div style="margin-top:12px" class="row">
+          <span class="small">Подсказка: цены растут экспоненциально. Это нормально для кликеров.</span>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (() => {
+      // ---------- Helpers ----------
+      const $ = (id) => document.getElementById(id);
+
+      function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+      function fmt(n){
+        // Compact-ish formatter without external deps.
+        if (!Number.isFinite(n)) return "0";
+        const abs = Math.abs(n);
+        if (abs < 1000) return String(Math.floor(n));
+        const units = ["K","M","B","T","Qa","Qi","Sx","Sp","Oc","No","Dc"];
+        let u = -1;
+        let v = abs;
+        while (v >= 1000 && u < units.length - 1){
+          v /= 1000;
+          u++;
+        }
+        const sign = n < 0 ? "-" : "";
+        const digits = v >= 100 ? 0 : v >= 10 ? 1 : 2;
+        return `${sign}${v.toFixed(digits)}${units[u]}`;
+      }
+
+      function now(){ return Date.now(); }
+
+      // ---------- Game State ----------
+      const STORAGE_KEY = "galaxy_clicker_mini_v1";
+
+      const defaultState = () => ({
+        energy: 0,
+        totalEnergy: 0,
+        upgrades: {
+          clickPower: 0,     // +1 per level (scaled)
+          drones: 0,         // +auto/sec
+          reactor: 0,        // multiplier
+          capacitor: 0       // click crit chance/dmg
+        },
+        lastTick: now()
+      });
+
+      let state = load() ?? defaultState();
+
+      // ---------- Upgrade Definitions ----------
+      const defs = [
+        {
+          id: "clickPower",
+          name: "Лазерный фокус",
+          badge: "click",
+          desc: "Увеличивает энергию за клик.",
+          baseCost: 15,
+          growth: 1.18,
+          effectText: (lvl) => `За клик: +${clickBonus(lvl)}`,
+          buy: () => buyUpgrade("clickPower", 1),
+        },
+        {
+          id: "drones",
+          name: "Сборочные дроны",
+          badge: "auto",
+          desc: "Пассивно генерируют энергию каждую секунду.",
+          baseCost: 60,
+          growth: 1.22,
+          effectText: (lvl) => `Авто: +${autoBonus(lvl)}/сек`,
+          buy: () => buyUpgrade("drones", 1),
+        },
+        {
+          id: "reactor",
+          name: "Квантовый реактор",
+          badge: "mult",
+          desc: "Увеличивает общий множитель ко всем источникам.",
+          baseCost: 250,
+          growth: 1.28,
+          effectText: (lvl) => `Множитель: x${multBonus(lvl).toFixed(2)}`,
+          buy: () => buyUpgrade("reactor", 1),
+        },
+        {
+          id: "capacitor",
+          name: "Импульсный конденсатор",
+          badge: "crit",
+          desc: "Шанс крит-клика: +1% за уровень. Крит даёт x3 за клик.",
+          baseCost: 120,
+          growth: 1.25,
+          effectText: (lvl) => `Крит шанс: ${(critChance(lvl)*100).toFixed(0)}% (x3)`,
+          buy: () => buyUpgrade("capacitor", 1),
+        }
+      ];
+
+      function upgradeLevel(id){ return state.upgrades[id] ?? 0; }
+
+      function costOf(def, nextLevel){
+        // cost is based on level to buy (nextLevel is 1-based index of purchased level)
+        // Using exponential cost: baseCost * growth^(level)
+        const lvl = nextLevel - 1; // 0-based
+        return Math.floor(def.baseCost * Math.pow(def.growth, lvl));
+      }
+
+      function nextCost(id){
+        const def = defs.find(d => d.id === id);
+        const nextLevel = upgradeLevel(id) + 1;
+        return costOf(def, nextLevel);
+      }
+
+      // ---------- Effects ----------
+      function multBonus(reactorLvl){
+        // Smooth growth: 1 + 0.08*lvl with small diminishing
+        // => lvl 10 -> ~1.68, lvl 25 -> ~2.60
+        return 1 + 0.08 * reactorLvl - 0.0006 * reactorLvl * reactorLvl;
+      }
+
+      function clickBonus(clickPowerLvl){
+        // Each lvl adds +1, with slight scaling every 10 levels
+        const base = clickPowerLvl;
+        const tier = Math.floor(clickPowerLvl / 10);
+        return base + tier * 2;
+      }
+
+      function autoBonus(dronesLvl){
+        // Each level adds +0.6/sec plus scaling
+        return Math.max(0, dronesLvl * 0.6 + Math.floor(dronesLvl/10) * 1.5);
+      }
+
+      function critChance(capLvl){
+        return clamp(capLvl * 0.01, 0, 0.35); // cap 35%
+      }
+
+      function perClick(){
+        const base = 1 + clickBonus(upgradeLevel("clickPower"));
+        const mult = multBonus(upgradeLevel("reactor"));
+        return base * mult;
+      }
+
+      function perSec(){
+        const base = autoBonus(upgradeLevel("drones"));
+        const mult = multBonus(upgradeLevel("reactor"));
+        return base * mult;
+      }
+
+      // ---------- UI ----------
+      const ui = {
+        energy: $("energy"),
+        perClick: $("perClick"),
+        perSec: $("perSec"),
+        mult: $("mult"),
+        orb: $("orb"),
+        shop: $("shop"),
+        toast: $("toast"),
+        btnSave: $("btnSave"),
+        btnReset: $("btnReset"),
+        btnBuyMax: $("btnBuyMax")
+      };
+
+      function showToast(text){
+        ui.toast.textContent = text;
+        ui.toast.classList.add("show");
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => ui.toast.classList.remove("show"), 1200);
+      }
+
+      function makeShop(){
+        ui.shop.innerHTML = "";
+        for (const def of defs){
+          const lvl = upgradeLevel(def.id);
+          const next = nextCost(def.id);
+
+          const el = document.createElement("div");
+          el.className = "item";
+
+          const left = document.createElement("div");
+          left.className = "left";
+
+          const name = document.createElement("div");
+          name.className = "name";
+          name.innerHTML = `${def.name} <span class="badge">${def.badge}</span>`;
+
+          const desc = document.createElement("div");
+          desc.className = "desc";
+          desc.textContent = def.desc;
+
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          meta.textContent = `Ур.: ${lvl} • ${def.effectText(lvl)}`;
+
+          left.appendChild(name);
+          left.appendChild(desc);
+          left.appendChild(meta);
+
+          const right = document.createElement("div");
+          right.className = "right";
+
+          const price = document.createElement("div");
+          price.className = "price";
+          price.textContent = `Цена: ${fmt(next)} энергии`;
+
+          const btn = document.createElement("button");
+          btn.textContent = "Купить";
+          btn.className = "btn-accent";
+          btn.disabled = state.energy < next;
+          btn.addEventListener("click", () => {
+            const ok = def.buy();
+            if (!ok) showToast("Не хватает энергии");
+            render();
+          });
+
+          right.appendChild(price);
+          right.appendChild(btn);
+
+          el.appendChild(left);
+          el.appendChild(right);
+
+          ui.shop.appendChild(el);
+        }
+      }
+
+      function render(){
+        ui.energy.textContent = fmt(state.energy);
+        ui.perClick.textContent = fmt(perClick());
+        ui.perSec.textContent = fmt(perSec());
+        ui.mult.textContent = "x" + multBonus(upgradeLevel("reactor")).toFixed(2);
+
+        // Update shop disabled states & texts by rebuilding quickly (simple approach).
+        makeShop();
+      }
+
+      // ---------- Buying ----------
+      function buyUpgrade(id, count){
+        const def = defs.find(d => d.id === id);
+        if (!def) return false;
+
+        for (let i = 0; i < count; i++){
+          const lvl = upgradeLevel(id);
+          const cost = costOf(def, lvl + 1);
+          if (state.energy < cost) return i > 0; // partial success allowed
+          state.energy -= cost;
+          state.upgrades[id] = lvl + 1;
+        }
+        showToast("Куплено");
+        return true;
+      }
+
+      function buyMaxOneEach(){
+        // Buys at most 1 level of each upgrade if affordable, in a loop until stuck.
+        let boughtAny = false;
+        for (let pass = 0; pass < 12; pass++){
+          let boughtThisPass = false;
+          for (const def of defs){
+            const cost = nextCost(def.id);
+            if (state.energy >= cost){
+              buyUpgrade(def.id, 1);
+              boughtThisPass = true;
+              boughtAny = true;
+            }
+          }
+          if (!boughtThisPass) break;
+        }
+        if (!boughtAny) showToast("Нечего купить");
+        render();
+      }
+
+      // ---------- Clicking ----------
+      function spawnPop(text, x, y){
+        const el = document.createElement("div");
+        el.className = "pop";
+        el.textContent = text;
+        document.body.appendChild(el);
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+        el.animate([
+          { transform:"translate(-50%,-50%) translateY(10px)", opacity:0 },
+          { transform:"translate(-50%,-50%) translateY(-10px)", opacity:1, offset:0.25 },
+          { transform:"translate(-50%,-50%) translateY(-38px)", opacity:0 }
+        ], { duration: 650, easing: "cubic-bezier(.2,.8,.2,1)" });
+        setTimeout(() => el.remove(), 700);
+      }
+
+      function doClick(clientX, clientY){
+        let gain = perClick();
+        const capLvl = upgradeLevel("capacitor");
+        const chance = critChance(capLvl);
+        const isCrit = Math.random() < chance;
+        if (isCrit) gain *= 3;
+
+        gain = Math.floor(gain);
+
+        state.energy += gain;
+        state.totalEnergy += gain;
+
+        spawnPop((isCrit ? "CRIT +" : "+") + fmt(gain), clientX, clientY);
+        render();
+      }
+
+      // Click (tap/click)
+      ui.orb.addEventListener("pointerdown", (e) => {
+        ui.orb.setPointerCapture(e.pointerId);
+        doClick(e.clientX, e.clientY);
+      });
+
+      // Hold-to-click with rate limit
+      let holding = false;
+      let holdTimer = null;
+      ui.orb.addEventListener("pointerdown", (e) => {
+        holding = true;
+        const rateMs = 110; // ~9 clicks/sec max
+        clearInterval(holdTimer);
+        holdTimer = setInterval(() => {
+          if (!holding) return;
+          // Use center of orb for pop position when holding
+          const r = ui.orb.getBoundingClientRect();
+          doClick(r.left + r.width/2, r.top + r.height/2);
+        }, rateMs);
+      });
+      window.addEventListener("pointerup", () => {
+        holding = false;
+        clearInterval(holdTimer);
+      });
+
+      // ---------- Tick loop (auto income + offline progress) ----------
+      function tick(){
+        const t = now();
+        const dtMs = clamp(t - state.lastTick, 0, 1000 * 60 * 60 * 6); // cap 6h offline
+        const dt = dtMs / 1000;
+
+        const income = perSec() * dt;
+        if (income > 0){
+          const add = Math.floor(income);
+          if (add > 0){
+            state.energy += add;
+            state.totalEnergy += add;
+          }
+        }
+
+        state.lastTick = t;
+        render();
+      }
+
+      // ---------- Save/Load ----------
+      function save(){
+        const payload = {
+          ...state,
+          // keep numbers safe
+          energy: Math.floor(state.energy),
+          totalEnergy: Math.floor(state.totalEnergy)
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      }
+
+      function load(){
+        try{
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+
+          // basic validation
+          if (typeof parsed !== "object" || parsed === null) return null;
+          if (typeof parsed.energy !== "number") return null;
+          if (!parsed.upgrades || typeof parsed.upgrades !== "object") return null;
+
+          return {
+            energy: parsed.energy ?? 0,
+            totalEnergy: parsed.totalEnergy ?? 0,
+            upgrades: {
+              clickPower: parsed.upgrades.clickPower ?? 0,
+              drones: parsed.upgrades.drones ?? 0,
+              reactor: parsed.upgrades.reactor ?? 0,
+              capacitor: parsed.upgrades.capacitor ?? 0
+            },
+            lastTick: typeof parsed.lastTick === "number" ? parsed.lastTick : now()
+          };
+        } catch {
+          return null;
+        }
+      }
+
+      // Manual save/reset
+      ui.btnSave.addEventListener("click", () => {
+        save();
+        showToast("Сохранено");
+      });
+
+      ui.btnReset.addEventListener("click", () => {
+        if (!confirm("Сбросить прогресс?")) return;
+        state = defaultState();
+        save();
+        render();
+        showToast("Сброшено");
+      });
+
+      ui.btnBuyMax.addEventListener("click", buyMaxOneEach);
+
+      // Autosave
+      setInterval(save, 5000);
+
+      // Main tick
+      // run often so UI stays responsive
+      setInterval(tick, 250);
+
+      // Offline progress on load (one immediate tick)
+      tick();
+
+      // ---------- Starfield ----------
+      const canvas = $("stars");
+      const ctx = canvas.getContext("2d");
+      let W=0,H=0,dpr=1;
+      let stars = [];
+
+      function resize(){
+        dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+        W = Math.floor(window.innerWidth * dpr);
+        H = Math.floor(window.innerHeight * dpr);
+        canvas.width = W;
+        canvas.height = H;
+        canvas.style.width = window.innerWidth + "px";
+        canvas.style.height = window.innerHeight + "px";
+
+        const count = Math.floor((window.innerWidth * window.innerHeight) / 14000);
+        stars = Array.from({length: clamp(count, 60, 240)}, () => ({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          z: Math.random() * 1 + 0.2,
+          r: Math.random() * 1.6 + 0.2,
+          tw: Math.random() * Math.PI * 2
+        }));
+      }
+
+      function drawStars(){
+        ctx.clearRect(0,0,W,H);
+        // subtle vignette
+        const g = ctx.createRadialGradient(W*0.5,H*0.45, Math.min(W,H)*0.05, W*0.5,H*0.5, Math.min(W,H)*0.85);
+        g.addColorStop(0, "rgba(255,255,255,0.02)");
+        g.addColorStop(1, "rgba(0,0,0,0.35)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0,0,W,H);
+
+        for (const s of stars){
+          s.tw += 0.02 * s.z;
+          const a = 0.35 + Math.sin(s.tw) * 0.18;
+          ctx.globalAlpha = a;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r * s.z * dpr, 0, Math.PI*2);
+          ctx.fillStyle = "rgba(233,236,255,1)";
+          ctx.fill();
+
+          // slow drift
+          s.y += 0.12 * s.z * dpr;
+          if (s.y > H + 10) { s.y = -10; s.x = Math.random() * W; }
+        }
+        ctx.globalAlpha = 1;
+        requestAnimationFrame(drawStars);
+      }
+
+      window.addEventListener("resize", resize);
+      resize();
+      drawStars();
+
+      // ---------- Initial render ----------
+      render();
+    })();
+  </script>
+</body>
+</html>
