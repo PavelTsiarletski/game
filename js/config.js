@@ -21,8 +21,6 @@ window.Game.Config = (function(){
     function autoBonus(dronesLvl, minerLvl = 0, stationLvl = 0, swarmLvl = 0, stardustLvl = 0, blackHoleLvl = 0, singularityLvl = 0){
         // Stardust: ~8/sec
         const stardust = Math.max(0, stardustLvl * 8 + Math.floor(stardustLvl/10) * 12);
-        // Drones: ~0.6/sec
-        const drone = Math.max(0, dronesLvl * 0.6 + Math.floor(dronesLvl/10) * 1.5);
         // Miners: ~5/sec base
         const miner = Math.max(0, minerLvl * 5 + Math.floor(minerLvl/10) * 8);
         // Station: ~25/sec
@@ -34,7 +32,13 @@ window.Game.Config = (function(){
         // Singularity: ~2500/sec
         const singularity = Math.max(0, singularityLvl * 2500 + Math.floor(singularityLvl/10) * 5000);
         
-        return stardust + drone + miner + station + swarm + blackHole + singularity;
+        const baseProduction = stardust + miner + station + swarm + blackHole + singularity;
+
+        // Drones: 0.6% of base production per level
+        // Formula: base * (dronesLvl * 0.006)
+        const droneBonus = baseProduction * (dronesLvl * 0.006);
+        
+        return baseProduction + droneBonus;
     }
 
     function critChance(capLvl){
@@ -65,11 +69,11 @@ window.Game.Config = (function(){
         {
             id: "drones",
             name: "Дроны-добытчики",
-            badge: "auto",
-            desc: "Маленькие помощники. Добывают крохи энергии.",
+            badge: "auto %",
+            desc: "Усиливают остальную добычу на 0.6% за уровень.",
             baseCost: 100,
             growth: 1.25,
-            effectText: (lvl) => `Авто: +0.6/c`,
+            effectText: (lvl) => `Бонус: +${(lvl * 0.6).toFixed(1)}%`,
         },
         {
             id: "miner",
