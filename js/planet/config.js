@@ -63,70 +63,78 @@ window.Game.PlanetConfig = (function(){
     ];
 
     // Upgrades - Realistic Formation Steps (IDLE ONLY)
+    // Upgrades - Cascading Production (Tier N produces Tier N-1)
     const upgrades = [
         {
             id: "electrostatic",
             name: "Electrostatic Forces",
-            type: "auto",
+            tier: 1,
+            currency: "matter", // Costs Matter
             baseCost: 15, 
-            freeFirst: true, // First level is free, then costs 15*growth
-            growth: 1.5,
-            desc: "Dust grains stick together automatically.",
-            effect: (lvl) => (lvl + 1) * 1 // Base income
+            freeFirst: true,
+            growth: 1.5, // Only the matter cost grows exponentially? Or linear for tiers? keeping exp for Tier 1
+            desc: "Dust grains stick together. Produces Matter.",
+            effect: (lvl) => lvl * 1 // Produces Matter
         },
         {
             id: "accretion",
             name: "Gravitational Accretion",
-            type: "auto",
-            baseCost: 100,
-            growth: 1.4,
-            desc: "Mass attracts more mass by gravity.",
-            effect: (lvl) => lvl * 5
+            tier: 2,
+            currency: "electrostatic", // Costs Tier 1
+            baseCost: 10, // Costs 10 Tier 1
+            growth: 1.2, // Growth for "building cost" usually lower or linear? Let's use 1.2 for now.
+            desc: "Accretes dust into larger clumps. Produces Electrostatic Forces.",
+            effect: (lvl) => lvl * 1 // Produces Tier 1
         },
         {
             id: "collisions",
-            name: "Meteorite Attraction", // Renamed from Capture
-            type: "auto", 
-            baseCost: 500,
-            growth: 1.5,
-            desc: "Gravity pulls in wandering rocks.",
-            effect: (lvl) => lvl * 20
+            name: "Meteorite Attraction",
+            tier: 3,
+            currency: "accretion", // Costs Tier 2
+            baseCost: 20, // Costs 20 Tier 2
+            growth: 1.2,
+            desc: "Attracts meteorites. Produces Gravitational Accretion.",
+            effect: (lvl) => lvl * 1 // Produces Tier 2
         },
         {
             id: "gravity_well",
             name: "Deep Gravity Well",
-            type: "auto",
-            baseCost: 2000,
-            growth: 1.4,
-            desc: "Stronger gravity pulls larger bodies.",
-            effect: (lvl) => lvl * 80
+            tier: 4,
+            currency: "collisions",
+            baseCost: 30,
+            growth: 1.2,
+            desc: "Intense gravity field. Produces Meteorite Attraction.",
+            effect: (lvl) => lvl * 1
         },
         {
             id: "volcanism",
             name: "Volcanic Outgassing",
-            type: "auto",
-            baseCost: 10000,
-            growth: 1.5,
-            desc: "Releases gases for atmosphere.",
-            effect: (lvl) => lvl * 300
+            tier: 5,
+            currency: "gravity_well",
+            baseCost: 40,
+            growth: 1.2,
+            desc: "Releases internal pressure. Produces Deep Gravity Well.",
+            effect: (lvl) => lvl * 1
         },
         {
             id: "comets",
-            name: "Comet Rain", // Renamed
-            type: "auto", 
-            baseCost: 50000,
-            growth: 1.6,
-            desc: "Constant bombardment delivers water.",
-            effect: (lvl) => lvl * 1000
+            name: "Comet Rain",
+            tier: 6,
+            currency: "volcanism",
+            baseCost: 50,
+            growth: 1.2,
+            desc: "Delivers water and volatiles. Produces Volcanic Outgassing.",
+            effect: (lvl) => lvl * 1
         },
         {
             id: "cooling",
             name: "Surface Cooling",
-            type: "auto",
-            baseCost: 200000,
-            growth: 1.5,
-            desc: "Crust formation accelerates stability.",
-            effect: (lvl) => lvl * 5000
+            tier: 7,
+            currency: "comets",
+            baseCost: 60,
+            growth: 1.2,
+            desc: "Stabilizes the crust. Produces Comet Rain.",
+            effect: (lvl) => lvl * 1
         }
     ];
 

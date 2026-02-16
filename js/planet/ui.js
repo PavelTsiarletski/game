@@ -68,11 +68,19 @@ window.Game.PlanetUI = (function(){
         const dt = (now - lastTime) / 1000;
         lastTime = now;
         
-        const prod = getProduction(state);
-        // Only auto production
-        if(prod.auto > 0){
-             state.matter += prod.auto * dt;
-             state.totalMatter += prod.auto * dt;
+        const flow = getProduction(state);
+        
+        // Apply Flow
+        if(flow.matter > 0){
+            state.matter += flow.matter * dt;
+            state.totalMatter += flow.matter * dt;
+        }
+        
+        // Apply flow to upgrades
+        for(const key in flow){
+            if(key !== 'matter' && flow[key] > 0){
+                state.upgrades[key] = (state.upgrades[key] || 0) + flow[key] * dt;
+            }
         }
 
         updateUI();
@@ -87,8 +95,9 @@ window.Game.PlanetUI = (function(){
         // Use global Utils.fmt if available, or fallback
         const fmt = window.Game.Utils ? window.Game.Utils.fmt : (n) => n.toFixed(0);
         
+        const flow = getProduction(state);
         ui.matter.textContent = fmt(state.matter);
-        ui.perSec.textContent = fmt(getProduction(state).auto) + "/s";
+        ui.perSec.textContent = fmt(flow.matter || 0) + "/s";
         
         const stage = getCurrentStage(state);
         ui.stageBadge.textContent = `Stage: ${stage.name}`;
@@ -104,25 +113,25 @@ window.Game.PlanetUI = (function(){
         for(const u of upgrades){
             const lvl = getUpgradeLevel(state, u.id);
             
+            // Get user's wallet amount for this currency
+            const wallet = (u.currency === 'matter') ? state.matter : (state.upgrades[u.currency] || 0);
+            
             // Determine how many we are trying to buy
             let count = 1;
             let cost = 0;
             
             if(buyAmount === "max"){
-                 const max = getMaxBuyable(u.id, lvl, state.matter);
-                 count = Math.max(1, max); // Always show at least next 1 cost if max is 0
+                 const max = getMaxBuyable(u.id, lvl, wallet);
+                 count = Math.max(1, max); 
                  cost = getBulkCost(u.id, lvl, count);
             } else {
                  count = buyAmount;
                  cost = getBulkCost(u.id, lvl, count);
             }
 
-            const canBuy = state.matter >= cost;
+            const canBuy = wallet >= cost;
             
-            // Special case for Max: if we can't afford even 1, cost handles it but let's be clean
-            // actually logic is: if max=0, we show cost for 1 but disable it
             if(buyAmount === 'max' && cost === 0){
-                 // We can't afford any. Show cost for 1.
                  count = 1;
                  cost = getBulkCost(u.id, lvl, 1);
             }
@@ -135,19 +144,18 @@ window.Game.PlanetUI = (function(){
                 btn.id = `btn-upg-${u.id}`;
                 btn.className = `shop-card-large`;
                 
-                // Static connection (only needs to happen once)
                 btn.onclick = () => {
-                     // Re-calculate count at click time to be safe/consistent
                      const clickLvl = getUpgradeLevel(state, u.id);
+                     const clickWallet = (u.currency === 'matter') ? state.matter : (state.upgrades[u.currency] || 0); // Need realtime check
                      let clickCount = 1;
+                     
                      if(buyAmount === "max"){
-                         clickCount = Math.max(1, getMaxBuyable(u.id, clickLvl, state.matter));
+                         clickCount = Math.max(1, getMaxBuyable(u.id, clickLvl, clickWallet));
                      } else {
                          clickCount = buyAmount;
                      }
                      
                     if(buyUpgrade(state, u.id, clickCount)){
-                        // Visual feedback
                         btn.classList.add("bought");
                         setTimeout(()=>btn.classList.remove("bought"), 100);
                         renderShop(); 
@@ -162,23 +170,42 @@ window.Game.PlanetUI = (function(){
             if(btn.className !== currentClass) btn.className = currentClass;
             btn.disabled = !canBuy;
 
-            // Efficient innerHTML update (or we could update specific spans for more speed)
-            // For now, full innerHTML is fine as long as the ELEMENT itself isn't replaced.
+            // Display Currency Name
+            let costName = "Matter";
+            if(u.currency !== "matter"){
+                const prev = upgrades.find(p => p.id === u.currency);
+                costName = prev ? prev.name : u.currency;
+            }
             
+            // Effect Description
+            let effectDesc = "+Matter";
+            if(u.tier > 1){
+                 const produces = upgrades.find(p => p.tier === u.tier-1);
+                 effectDesc = produces ? `+${produces.name}` : "";
+            }
+
             // Effect diff
             const currentEffect = u.effect(lvl);
             const newEffect = u.effect(lvl + count);
             const diff = newEffect - currentEffect;
             
+            // Shorten names if needed or use icons? For now just text.
+            
             const html = `
                 <div class="card-title-row">
                     <span class="name">${u.name}</span>
-                    <span class="lvl">Lvl ${lvl}</span>
+                    <span class="lvl">Lvl ${fmt(lvl)}</span>
                 </div>
                 <div class="card-desc">${u.desc}</div>
-                <div class="card-footer">
-                    <span class="bonus">+${fmt(diff)}/s <span style="font-size:0.8em; opacity:0.7">(x${count})</span></span>
-                    <span class="price">${cost === 0 && lvl===0 ? 'FREE' : fmt(cost)}</span>
+                <div class="card-footer" style="flex-direction:column; align-items:flex-end; gap:2px;">
+                    <div class="bonus" style="font-size:0.85em; color:#fab1a0">
+                        +${fmt(diff)} ${effectDesc.replace('+','')} /s 
+                        ${count > 1 ? `<span style="opacity:0.7">(x${count})</span>` : ''}
+                    </div>
+                    <div class="price" style="color: ${canBuy ? '#fff' : '#ff7675'}">
+                        ${cost === 0 && lvl===0 ? 'FREE' : fmt(cost) + ' ' + (costName === 'Matter' ? 'Matter' : 'Items')}
+                    </div>
+                     ${costName !== 'Matter' ? `<div style="font-size:0.7em; opacity:0.6">Uses: ${costName}</div>` : ''}
                 </div>
             `;
             
