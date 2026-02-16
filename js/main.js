@@ -18,10 +18,15 @@ window.Game.Main = (function(){
 
         // Render Normal Shop
         renderShop(state, (id) => {
-             const bought = buyUpgrade(state, id, 1);
-             if(bought) showToast("Куплено");
-             else showToast("Не хватает энергии");
-             updateUI();
+            try {
+                 const bought = buyUpgrade(state, id, 1);
+                 if(bought) showToast("Куплено");
+                 else showToast("Не хватает энергии");
+                 updateUI();
+            } catch(e) {
+                console.error(e);
+                showToast("Ошибка: " + e.message);
+            }
         });
         
         // Render Prestige Shop
