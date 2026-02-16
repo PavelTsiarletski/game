@@ -350,3 +350,36 @@ main{
     content:"(Locked)";
     font-size:10px; color:rgba(255,255,255,.3);
 }
+
+/* Prestige Button */
+.btn-prestige{
+    border-color: rgba(124,92,255,.45);
+    background: linear-gradient(135deg, #7c5cff, #ff5c7a);
+    box-shadow: 0 0 16px rgba(124,92,255,.4);
+    animation: pulse-prestige 2s infinite;
+}
+@keyframes pulse-prestige{
+    0%{ box-shadow: 0 0 16px rgba(124,92,255,.4); transform: scale(1); }
+    50%{ box-shadow: 0 0 24px rgba(255,92,122,.6); transform: scale(1.02); }
+    100%{ box-shadow: 0 0 16px rgba(124,92,255,.4); transform: scale(1); }
+}
+
+/* Golden Orb */
+.golden-orb{
+    position:absolute;
+    width:40px; height:40px;
+    background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b);
+    border-radius:50%;
+    box-shadow: 0 0 20px #ffd700, inset 0 0 10px #fff;
+    cursor:pointer;
+    z-index:999;
+    animation: float-orb 3s ease-in-out infinite, appear 0.5s ease-out;
+}
+@keyframes float-orb{
+    0%, 100%{ transform:translateY(0); }
+    50%{ transform:translateY(-10px); }
+}
+@keyframes appear{
+    from{ transform: scale(0); opacity:0; }
+    to{ transform: scale(1); opacity:1; }
+}
