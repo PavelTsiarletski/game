@@ -30,6 +30,8 @@
                   radial-gradient(900px 600px at 25% 70%, rgba(41,211,255,.18), transparent 60%),
                   var(--bg);
       overflow-x:hidden;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     /* Starfield canvas behind everything */
@@ -317,8 +319,15 @@
           <p class="card-title">Ядро</p>
         </div>
         <div class="row">
+          <label class="toggle-label" title="Автоматическое удержание кнопки">
+            <span>Autohold</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="chkAutoHold">
+              <span class="slider"></span>
+            </div>
+          </label>
           <span class="badge" id="saveStatus">autosave: on</span>
-          <span class="badge" id="versionBadge">v1</span>
+          <span class="badge" id="versionBadge">v1.1</span>
         </div>
       </div>
 
@@ -417,6 +426,7 @@
           reactor: 0,        // multiplier
           capacitor: 0       // click crit chance/dmg
         },
+        autoHold: false,
         lastTick: now()
       });
 
@@ -527,7 +537,8 @@
         toast: $("toast"),
         btnSave: $("btnSave"),
         btnReset: $("btnReset"),
-        btnBuyMax: $("btnBuyMax")
+        btnBuyMax: $("btnBuyMax"),
+        chkAutoHold: $("chkAutoHold")
       };
 
       function showToast(text){
@@ -597,6 +608,9 @@
         ui.perClick.textContent = fmt(perClick());
         ui.perSec.textContent = fmt(perSec());
         ui.mult.textContent = "x" + multBonus(upgradeLevel("reactor")).toFixed(2);
+        
+        // Update autohold toggle
+        if(ui.chkAutoHold) ui.chkAutoHold.checked = state.autoHold;
 
         // Update shop disabled states & texts by rebuilding quickly (simple approach).
         makeShop();
@@ -675,24 +689,58 @@
         doClick(e.clientX, e.clientY);
       });
 
-      // Hold-to-click with rate limit
+      // Hold-to-click with rate limit + Autohold
       let holding = false;
       let holdTimer = null;
-      ui.orb.addEventListener("pointerdown", (e) => {
-        holding = true;
+
+      function startHold(){
+        if (holdTimer) return;
         const rateMs = 110; // ~9 clicks/sec max
-        clearInterval(holdTimer);
+        
+        ui.orb.classList.add("active-hold");
+        
         holdTimer = setInterval(() => {
-          if (!holding) return;
-          // Use center of orb for pop position when holding
+          // Use center of orb for pop position
           const r = ui.orb.getBoundingClientRect();
           doClick(r.left + r.width/2, r.top + r.height/2);
         }, rateMs);
+      }
+
+      function stopHold(){
+        // Only stop if autohold is off AND we are not manually holding
+        if (!state.autoHold && !holding) {
+          clearInterval(holdTimer);
+          holdTimer = null;
+          ui.orb.classList.remove("active-hold");
+        }
+      }
+
+      // Manual hold logic
+      ui.orb.addEventListener("pointerdown", (e) => {
+        holding = true;
+        startHold();
       });
+      
       window.addEventListener("pointerup", () => {
         holding = false;
-        clearInterval(holdTimer);
+        stopHold();
       });
+
+      // Autohold Toggle Logic
+      if (ui.chkAutoHold) {
+        ui.chkAutoHold.addEventListener("change", (e) => {
+          state.autoHold = e.target.checked;
+          if (state.autoHold) {
+            startHold();
+          } else {
+            stopHold();
+          }
+          save(); // save pref immediately
+        });
+      }
+      
+      // Initialize autohold if saved as true
+      setTimeout(() => { if (state.autoHold) startHold(); }, 100);
 
       // ---------- Tick loop (auto income + offline progress) ----------
       function tick(){
