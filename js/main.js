@@ -4,8 +4,8 @@ window.Game.Main = (function(){
     const { $ } = window.Game.Utils;
     const { loadState, saveState, resetState } = window.Game.State; // resetState is handled specially now
     const { upgrades, achievements } = window.Game.Config;
-    const { getPerClick, getPerSec, buyUpgrade, getUpgradeLevel, getNextCost, doPrestige, calculatePrestigeGain } = window.Game.Core;
-    const { ui, render, renderShop, renderAchievements, spawnPop, showToast, setOrbActive, spawnGoldenOrb } = window.Game.UI;
+    const { getPerClick, getPerSec, buyUpgrade, buyPrestigeUpgrade, getUpgradeLevel, getNextCost, getCritMultiplier, doPrestige, calculatePrestigeGain } = window.Game.Core;
+    const { ui, render, renderShop, renderPrestigeShop, renderAchievements, spawnPop, showToast, setOrbActive, spawnGoldenOrb } = window.Game.UI;
     const { fmt, clamp, now } = window.Game.Utils;
 
     let state = loadState();
@@ -16,75 +16,34 @@ window.Game.Main = (function(){
         // Autohold toggle
         if(ui.chkAutoHold) ui.chkAutoHold.checked = state.autoHold;
 
-        // Render Shop
-        const container = ui.shop;
-        container.innerHTML = "";
+        // Render Normal Shop
+        renderShop(state, (id) => {
+             const bought = buyUpgrade(state, id, 1);
+             if(bought) showToast("Куплено");
+             else showToast("Не хватает энергии");
+             updateUI();
+        });
         
-        for (const def of upgrades){
-            const lvl = getUpgradeLevel(state, def.id);
-            const next = getNextCost(state, def.id);
-
-            const el = document.createElement("div");
-            el.className = "item";
-
-            const left = document.createElement("div");
-            left.className = "left";
-
-            const name = document.createElement("div");
-            name.className = "name";
-            name.innerHTML = `${def.name} <span class="badge">${def.badge}</span>`;
-
-            const desc = document.createElement("div");
-            desc.className = "desc";
-            desc.textContent = def.desc;
-
-            const meta = document.createElement("div");
-            meta.className = "meta";
-            meta.textContent = `Ур.: ${lvl} • ${def.effectText(lvl)}`;
-
-            left.appendChild(name);
-            left.appendChild(desc);
-            left.appendChild(meta);
-
-            const right = document.createElement("div");
-            right.className = "right";
-
-            const price = document.createElement("div");
-            price.className = "price";
-            price.textContent = `Цена: ${fmt(next)} энергии`;
-
-            const btn = document.createElement("button");
-            btn.textContent = "Купить";
-            btn.className = "btn-accent";
-            btn.disabled = state.energy < next;
-            
-            btn.onclick = () => {
-                const bought = buyUpgrade(state, def.id, 1);
-                if(bought) showToast("Куплено");
-                else showToast("Не хватает энергии");
-                updateUI();
-            };
-
-            right.appendChild(price);
-            right.appendChild(btn);
-
-            el.appendChild(left);
-            el.appendChild(right);
-
-            container.appendChild(el);
-        }
+        // Render Prestige Shop
+        renderPrestigeShop(state, (id) => {
+             const bought = buyPrestigeUpgrade(state, id);
+             if(bought) showToast("Улучшено (ТМ)");
+             else showToast("Не хватает ТМ");
+             updateUI();
+        });
     }
 
     // Actions
     function doClick(cX, cY){
         let gain = getPerClick(state);
         
-        // Crit check (using core logic ideally, but replicating here for simplicity as I extracted it)
-        // Wait, getPerClick already calculates base * mult. Crit is separate.
+        // Crit check 
         const capLvl = getUpgradeLevel(state, "capacitor");
         const chance = window.Game.Config.critChance(capLvl);
         const isCrit = Math.random() < chance;
-        if (isCrit) gain *= 3;
+        if (isCrit) {
+            gain *= getCritMultiplier(state);
+        }
 
         gain = Math.floor(gain);
         state.energy += gain;

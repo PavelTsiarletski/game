@@ -16,6 +16,7 @@ window.Game.State = (function(){
             capacitor: 0,
             fusion: 0
         },
+        prestigeUpgrades: {}, // New: Persistent across soft resets
         achievements: [],
         stats: {
             clicks: 0,
@@ -34,6 +35,7 @@ window.Game.State = (function(){
                 ...defaultState(),
                 ...parsed,
                 upgrades: { ...defaultState().upgrades, ...(parsed.upgrades || {}) },
+                prestigeUpgrades: { ...defaultState().prestigeUpgrades, ...(parsed.prestigeUpgrades || {}) },
                 stats: { ...defaultState().stats, ...(parsed.stats || {}) },
                 // Ensure numbers
                 energy: Number(parsed.energy) || 0,

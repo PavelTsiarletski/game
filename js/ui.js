@@ -20,7 +20,8 @@ window.Game.UI = (function(){
         btnReset: $("btnReset"), // This will be dynamic (Reset vs Prestige)
         btnBuyMax: $("btnBuyMax"),
         chkAutoHold: $("chkAutoHold"),
-        achievementsPanel: $("achievementsPanel")
+        achievementsPanel: $("achievementsPanel"),
+        prestigeShop: $("prestigeShop")
     };
 
     let _toastTimeout;
@@ -55,12 +56,11 @@ window.Game.UI = (function(){
         ui.perSec.textContent = fmt(Core.getPerSec(state));
         
         // Mult display
-        const reactorLvl = Core.getUpgradeLevel(state, "reactor");
-        const mult = Config.multBonus(reactorLvl, state.darkMatter);
+        const mult = Core.getTotalMultiplier(state);
         ui.mult.textContent = "x" + mult.toFixed(2);
         
         // Prestige Button State
-        const possibleGain = Core.calculatePrestigeGain(state.totalEnergy);
+        const possibleGain = Core.calculatePrestigeGain(state);
         if(possibleGain > 0){
             ui.btnReset.textContent = `Prestige (+${fmt(possibleGain)} DM)`;
             ui.btnReset.classList.add("btn-prestige"); // Need CSS for this
@@ -74,57 +74,101 @@ window.Game.UI = (function(){
         }
     }
 
+    function createShopItem(name, badge, desc, meta, priceText, canBuy, onBuy, isPrestige = false){
+        const el = document.createElement("div");
+        el.className = isPrestige ? "item item-prestige" : "item";
+
+        const left = document.createElement("div");
+        left.className = "left";
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "name";
+        nameEl.innerHTML = `${name} <span class="badge" style="${isPrestige ? 'background:rgba(124,92,255,.3)' : ''}">${badge}</span>`;
+
+        const descEl = document.createElement("div");
+        descEl.className = "desc";
+        descEl.textContent = desc;
+
+        const metaEl = document.createElement("div");
+        metaEl.className = "meta";
+        metaEl.textContent = meta;
+
+        left.appendChild(nameEl);
+        left.appendChild(descEl);
+        left.appendChild(metaEl);
+
+        const right = document.createElement("div");
+        right.className = "right";
+
+        const priceEl = document.createElement("div");
+        priceEl.className = "price";
+        priceEl.textContent = priceText;
+
+        const btn = document.createElement("button");
+        btn.textContent = "Купить";
+        btn.className = isPrestige ? "btn-prestige-buy" : "btn-accent";
+        btn.disabled = !canBuy;
+        btn.onclick = onBuy;
+
+        right.appendChild(priceEl);
+        right.appendChild(btn);
+
+        el.appendChild(left);
+        el.appendChild(right);
+        
+        return el;
+    }
+
     function renderShop(state, onBuy){
         const Core = window.Game.Core;
         ui.shop.innerHTML = "";
         for (const def of upgrades){
             const lvl = Core.getUpgradeLevel(state, def.id);
             const next = Core.getNextCost(state, def.id);
+            const canBuy = state.energy >= next;
 
-            const el = document.createElement("div");
-            el.className = "item";
-
-            const left = document.createElement("div");
-            left.className = "left";
-
-            const name = document.createElement("div");
-            name.className = "name";
-            name.innerHTML = `${def.name} <span class="badge">${def.badge}</span>`;
-
-            const desc = document.createElement("div");
-            desc.className = "desc";
-            desc.textContent = def.desc;
-
-            const meta = document.createElement("div");
-            meta.className = "meta";
-            meta.textContent = `Ур.: ${lvl} • ${def.effectText(lvl)}`;
-
-            left.appendChild(name);
-            left.appendChild(desc);
-            left.appendChild(meta);
-
-            const right = document.createElement("div");
-            right.className = "right";
-
-            const price = document.createElement("div");
-            price.className = "price";
-            price.textContent = `Цена: ${fmt(next)} энергии`;
-
-            const btn = document.createElement("button");
-            btn.textContent = "Купить";
-            btn.className = "btn-accent";
-            btn.disabled = state.energy < next;
-            btn.addEventListener("click", () => {
-                onBuy(def.id);
-            });
-
-            right.appendChild(price);
-            right.appendChild(btn);
-
-            el.appendChild(left);
-            el.appendChild(right);
-
+            const el = createShopItem(
+                def.name, def.badge, def.desc, 
+                `Ур.: ${lvl} • ${def.effectText(lvl)}`,
+                `Цена: ${fmt(next)}`,
+                canBuy,
+                () => onBuy(def.id)
+            );
             ui.shop.appendChild(el);
+        }
+    }
+
+    function renderPrestigeShop(state, onBuy){
+        if(!ui.prestigeShop) return;
+        
+        // Only show if we have DM or have reset once
+        if(!state.stats.resets && state.darkMatter <= 0){
+             ui.prestigeShop.parentElement.style.display = "none";
+             return;
+        }
+        ui.prestigeShop.parentElement.style.display = "flex"; // Ensure container is visible
+        ui.prestigeShop.innerHTML = "";
+
+        const { prestigeUpgrades } = window.Game.Config;
+        const Core = window.Game.Core;
+
+        for(const def of prestigeUpgrades){
+             const lvl = Core.getPrestigeUpgradeLevel(state, def.id);
+             const next = Core.getNextPrestigeCost(state, def.id);
+             const maxed = def.maxLevel && lvl >= def.maxLevel;
+             const canBuy = !maxed && state.darkMatter >= next;
+             
+             const priceText = maxed ? "MAX" : `${fmt(next)} ТМ`;
+             
+             const el = createShopItem(
+                 def.name, "PRESTIGE", def.desc,
+                 `Ур.: ${lvl}${def.maxLevel ? '/'+def.maxLevel : ''} • ${def.effectText(lvl)}`,
+                 priceText,
+                 canBuy,
+                 () => onBuy(def.id),
+                 true
+             );
+             ui.prestigeShop.appendChild(el);
         }
     }
 
@@ -191,7 +235,7 @@ window.Game.UI = (function(){
 
     return { 
         ui, showToast, spawnPop, 
-        render, renderShop, renderAchievements, 
+        render, renderShop, renderPrestigeShop, renderAchievements, 
         setOrbActive, spawnGoldenOrb
     };
 })();

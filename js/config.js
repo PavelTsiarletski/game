@@ -78,56 +78,54 @@ window.Game.Config = (function(){
             effectText: (lvl) => `Крит шанс: ${(critChance(lvl)*100).toFixed(0)}%`,
         },
         {
-            id: "fusion", // New
+            id: "fusion",
             name: "Термоядерное ядро",
             badge: "mult++",
-            desc: "Мощный усилитель реактора.",
+            desc: "Мощный усилитель. Каждое ядро умножает ВСЮ добычу на 1.5.",
             baseCost: 15000,
-            growth: 1.35,
-            effectText: (lvl) => `(В разработке) Пока просто красиво.`, // Placeholder logic if we want simple behavior or complex
+            growth: 1.5, // Steep cost growth
+            effectText: (lvl) => `Бонус: x${Math.pow(1.5, lvl).toFixed(2)}`,
         }
     ];
 
-    // ---------- Achievement Definitions ----------
-    const achievements = [
+    // ---------- Prestige Upgrades ----------
+    const prestigeUpgrades = [
         {
-            id: "energy_1k",
-            name: "Малый накопитель",
-            desc: "Накопить 1,000 Всего Энергии",
-            condition: (state) => state.totalEnergy >= 1000
+            id: "darkFlow",
+            name: "Темный Поток",
+            desc: "Увеличивает получение Темной Материи при сбросе.",
+            baseCost: 10,
+            growth: 2.5,
+            effectText: (lvl) => `+${lvl * 5}% ТМ`,
+            maxLevel: 20
         },
         {
-            id: "energy_1m",
-            name: "Мега-батарея",
-            desc: "Накопить 1,000,000 Всего Энергии",
-            condition: (state) => state.totalEnergy >= 1000000
+             id: "timeWarp",
+             name: "Временная Петля",
+             desc: "Начинать с энергией после сброса.",
+             baseCost: 25,
+             growth: 3,
+             effectText: (lvl) => `Старт: ${fmt(1000 * Math.pow(5, lvl))}`,
+             maxLevel: 10
         },
         {
-            id: "click_100",
-            name: "Ручной труд",
-            desc: "Сделать 100 ручных кликов",
-            condition: (state) => state.stats && state.stats.clicks >= 100
-        },
-        {
-            id: "upgrades_10",
-            name: "Технолог",
-            desc: "Купить 10 уровней любых улучшений",
-            condition: (state) => {
-                let total = 0;
-                for(let k in state.upgrades) total += state.upgrades[k];
-                return total >= 10;
-            }
-        },
-        {
-            id: "prestige_1",
-            name: "Перерождение",
-            desc: "Совершить первый сброс ради Темной Материи",
-            condition: (state) => state.darkMatter > 0
+            id: "critMastery",
+            name: "Мастер Крита",
+            desc: "Увеличивает множитель критического клика.",
+            baseCost: 50,
+            growth: 4,
+            effectText: (lvl) => `Крит: x${3 + lvl}`, // Base 3, +1 per level
+            maxLevel: 10
         }
     ];
+
+    // Helper for formatted numbers in config (needed for timeWarp textual description)
+    function fmt(n){
+         return window.Game.Utils.fmt(n);
+    }
 
     return { 
-        upgrades, achievements, 
+        upgrades, prestigeUpgrades, achievements, 
         multBonus, clickBonus, autoBonus, critChance 
     };
 })();

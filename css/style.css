@@ -383,3 +383,22 @@ main{
     from{ transform: scale(0); opacity:0; }
     to{ transform: scale(1); opacity:1; }
 }
+
+.item-prestige{
+    background: linear-gradient(135deg, rgba(80, 50, 200, 0.15), rgba(80, 50, 200, 0.05));
+    border-color: rgba(124,92,255,.25);
+}
+.btn-prestige-buy{
+    border: 1px solid rgba(124,92,255,.45);
+    background: linear-gradient(180deg, rgba(124,92,255,.25), rgba(124,92,255,.10));
+    color: #dedeff;
+    border-radius:12px;
+    padding:8px 12px;
+    font-weight:650;
+    cursor:pointer;
+    transition: .2s;
+}
+.btn-prestige-buy:hover{
+    background: linear-gradient(180deg, rgba(124,92,255,.35), rgba(124,92,255,.15));
+    box-shadow: 0 0 15px rgba(124,92,255,.25);
+}
