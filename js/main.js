@@ -19,19 +19,25 @@ window.Game.Main = (function(){
         // Render Normal Shop
         renderShop(state, (id) => {
             try {
+                 console.log(`[Shop] Attempting to buy upgrade: ${id}`);
                  const bought = buyUpgrade(state, id, 1);
+                 console.log(`[Shop] Buy result for ${id}: ${bought}`);
+                 
                  if(bought) showToast("Куплено");
                  else showToast("Не хватает энергии");
                  updateUI();
             } catch(e) {
-                console.error(e);
+                console.error("[Shop] Error buying:", e);
                 showToast("Ошибка: " + e.message);
             }
         });
         
         // Render Prestige Shop
         renderPrestigeShop(state, (id) => {
+             console.log(`[Prestige] Attempting to buy: ${id}`);
              const bought = buyPrestigeUpgrade(state, id);
+             console.log(`[Prestige] Result: ${bought}`);
+
              if(bought) showToast("Улучшено (ТМ)");
              else showToast("Не хватает ТМ");
              updateUI();
