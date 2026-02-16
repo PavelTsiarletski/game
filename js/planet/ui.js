@@ -53,7 +53,7 @@ window.Game.PlanetUI = (function(){
         ui.btnMax.addEventListener("click", () => setMult("max", ui.btnMax));
         
         // Auto-Save
-        setInterval(() => save(state), 30000);
+        setInterval(() => save(state), 10000);
         
         // Game Loop
         requestAnimationFrame(loop);
