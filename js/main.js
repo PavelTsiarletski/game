@@ -125,7 +125,7 @@ window.Game.Main = (function(){
 
     // Reset / Prestige Handler
     ui.btnReset.addEventListener("click", () => {
-        const gain = calculatePrestigeGain(state.totalEnergy);
+        const gain = calculatePrestigeGain(state);
         if(gain > 0){
              if(confirm(`Сбросить прогресс и получить ${fmt(gain)} Темной Материи? (Бонус: +${gain*10}%)`)){
                  state = doPrestige(state);
