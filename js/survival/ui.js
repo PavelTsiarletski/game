@@ -128,15 +128,18 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.elements.upgradesContainer.innerHTML = '';
 
             const upgrades = [
-                { id: 'damage', name: 'Increase Damage', cost: 100, key: 'damageMultiplier', inc: 0.1 },
-                { id: 'health', name: 'Max Health', cost: 100, key: 'maxHpMultiplier', inc: 0.1 },
-                { id: 'speed', name: 'Movement Speed', cost: 150, key: 'speedMultiplier', inc: 0.05 },
+                { id: 'damage', name: 'Increase Damage', cost: 50, key: 'damageMultiplier', inc: 0.1 },
+                { id: 'health', name: 'Max Health', cost: 50, key: 'maxHpMultiplier', inc: 0.1 },
+                { id: 'speed', name: 'Movement Speed', cost: 75, key: 'speedMultiplier', inc: 0.05 },
             ];
 
             upgrades.forEach(upg => {
                 const currentVal = stats[upg.key] || 1;
-                // Scale cost? 
-                const currentCost = Math.floor(upg.cost * currentVal * 2); 
+                // Scale cost based on current multiplier level
+                // (currentVal - 1) / inc gives number of upgrades bought approximately
+                const upgradesBought = Math.round((currentVal - 1) / upg.inc);
+                // Linear cost scaling: Base + (Bought * Base * 0.5)
+                const currentCost = Math.floor(upg.cost + (upgradesBought * upg.cost * 0.5)); 
 
                 const item = document.createElement('div');
                 item.className = 'shop-item';

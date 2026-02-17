@@ -27,7 +27,7 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.currentHp = this.stats.hp;
             
             this.xp = 0;
-            this.maxXp = 100;
+            this.maxXp = 50;
             this.level = 1;
 
             this.isDead = false;
@@ -102,7 +102,7 @@ window.SURVIVAL = window.SURVIVAL || {};
         levelUp() {
             this.level++;
             this.xp -= this.maxXp;
-            this.maxXp = Math.floor(this.maxXp * 1.2);
+            this.maxXp = Math.floor(this.maxXp * 1.1);
             // Full Heal on level up? Maybe just a bit.
             this.currentHp = Math.min(this.currentHp + (this.stats.hp * 0.2), this.stats.hp);
             // Signal Game to show level up screen
