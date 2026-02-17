@@ -80,6 +80,34 @@ window.Game.PlanetConfig = (function(){
             threshold: 1000000000, // 1B
             desc: "A machine world of pure efficiency.",
             color: "#0984e3" // Cyan/Electric Blue
+        },
+        {
+            id: "ecumenopolis",
+            name: "Ecumenopolis",
+            threshold: 10000000000, // 10B
+            desc: "A planetary-wide city.",
+            color: "#636e72" // Metal/Grey
+        },
+        {
+            id: "dyson",
+            name: "Dyson Swarm",
+            threshold: 50000000000, // 50B
+            desc: "Harvesting the power of the sun.",
+            color: "#fdcb6e" // Gold/Solar
+        },
+        {
+            id: "blackhole",
+            name: "Singularity",
+            threshold: 1000000000000, // 1T
+            desc: "Collapse into infinite density.",
+            color: "#000000" // Black
+        },
+        {
+            id: "ascension",
+            name: "Ascension",
+            threshold: 100000000000000, // 100T
+            desc: "Pure energy. The end of matter.",
+            color: "#ffffff" // White/Light
         }
     ];
 
