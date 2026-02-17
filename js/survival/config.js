@@ -1,8 +1,8 @@
 window.SURVIVAL = window.SURVIVAL || {};
 
 window.SURVIVAL.Config = {
-    CANVAS_WIDTH: 1280,
-    CANVAS_HEIGHT: 720,
+    CANVAS_WIDTH: window.innerWidth,
+    CANVAS_HEIGHT: window.innerHeight,
     FPS: 60,
     
     // Collision Categories (Bitmask)

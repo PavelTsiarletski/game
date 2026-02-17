@@ -35,6 +35,16 @@ window.SURVIVAL = window.SURVIVAL || {};
             
             // Start loop
             requestAnimationFrame((t) => this.loop(t));
+
+            window.addEventListener('resize', () => this.handleResize());
+            this.handleResize();
+        }
+
+        handleResize() {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+            CONFIG.CANVAS_WIDTH = window.innerWidth;
+            CONFIG.CANVAS_HEIGHT = window.innerHeight;
         }
 
         bindInputs() {
