@@ -114,6 +114,32 @@ window.SURVIVAL.Config = {
             color: '#00e676',
             count: 1,
             size: 8
+        },
+        SNIPER: {
+            name: 'Railgun',
+            type: 'projectile',
+            damage: 100, // One shot kills early
+            cooldown: 1500,
+            speed: 25, // Instant feel
+            range: 1000,
+            color: '#ff00ff', // Magenta
+            spread: 0,
+            count: 1,
+            pierce: 10
+        },
+        ROCKET: {
+            name: 'RPG',
+            type: 'projectile',
+            damage: 30,
+            cooldown: 1200,
+            speed: 6,
+            range: 500,
+            color: '#ff5722', // Deep Orange
+            spread: 0,
+            count: 1,
+            pierce: 0,
+            explosive: true,
+            explosionRadius: 100
         }
     }
 };

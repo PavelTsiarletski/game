@@ -158,14 +158,19 @@ window.SURVIVAL = window.SURVIVAL || {};
 
         update(player) {
             this.waveTimer++;
-            if (this.waveTimer % 3600 === 0) { // Every minute
-                 this.difficultyMultiplier += 0.2;
-                 this.spawnRate = Math.max(20, this.spawnRate - 10);
+            // Increase difficulty every 30 seconds (1800 frames)
+            if (this.waveTimer % 1800 === 0) { 
+                 this.difficultyMultiplier += 0.3; // +30% stats
+                 this.spawnRate = Math.max(15, this.spawnRate - 10); // Spawn faster
             }
 
             this.spawnTimer++;
             if (this.spawnTimer >= this.spawnRate) {
-                this.spawnEnemy(player);
+                // Spawn multiple based on difficulty
+                const spawnCount = Math.floor(this.difficultyMultiplier); 
+                for(let i=0; i<spawnCount; i++) {
+                     this.spawnEnemy(player);
+                }
                 this.spawnTimer = 0;
             }
 

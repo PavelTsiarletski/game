@@ -18,6 +18,10 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.color = stats.color;
             this.markedForDeletion = false;
             this.hitList = []; // Track enemies hit to handle pierce
+            
+            // Explosive properties
+            this.explosive = stats.explosive || false;
+            this.explosionRadius = stats.explosionRadius || 0;
         }
 
         update(dt) {

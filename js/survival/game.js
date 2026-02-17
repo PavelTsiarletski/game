@@ -128,33 +128,37 @@ window.SURVIVAL = window.SURVIVAL || {};
         checkCollisions() {
             // Projectiles vs Enemies
             this.weapons.projectiles.forEach(proj => {
+                // Check if explosive should detenonate at max range (if missed everything)
+                // For now, only detonate on impact
+
                 this.enemies.enemies.forEach(enemy => {
                     if (Utils.checkCircleCollision(proj, enemy) && !proj.hitList.includes(enemy)) {
-                        // Hit!
-                        // Calculate damage with player multipliers
-                        const damage = proj.damage * (this.player.persistentStats.damageMultiplier || 1);
+                        // Impact Logic
                         
-                        // Knockback vector
-                        const angle = Utils.getAngle(proj.x, proj.y, enemy.x, enemy.y);
-                        const kForce = 2; // Knockback force
-                        
-                        enemy.takeDamage(damage, Math.cos(angle)*kForce, Math.sin(angle)*kForce);
-                        this.ui.spawnFloatingText(enemy.x, enemy.y, Math.floor(damage), CONFIG.COLORS.TEXT_DAMAGE);
-                        
-                        if (proj.pierce > 0) {
-                            proj.pierce--;
-                            proj.hitList.push(enemy);
-                        } else {
+                        if (proj.explosive) {
+                            // EXPLOSION LOGIC
+                            this.createExplosion(proj.x, proj.y, proj.explosionRadius, proj.damage * (this.player.persistentStats.damageMultiplier || 1));
                             proj.markedForDeletion = true;
-                        }
-                        
-                        if (enemy.hp <= 0 && !enemy.alreadyDead) {
-                            enemy.alreadyDead = true; // Prevent multiple counts
-                            this.kills++;
-                            // Drop XP / Gold
-                            this.enemies.pickups.push(new Pickup(enemy.x, enemy.y, 'xp', enemy.xp));
-                            if (Math.random() < enemy.goldChance) {
-                                 this.enemies.pickups.push(new Pickup(enemy.x + 5, enemy.y + 5, 'gold', 10));
+                        } else {
+                            // Standard Projectile Logic
+                            const damage = proj.damage * (this.player.persistentStats.damageMultiplier || 1);
+                            
+                            // Knockback vector
+                            const angle = Utils.getAngle(proj.x, proj.y, enemy.x, enemy.y);
+                            const kForce = 2; 
+                            
+                            enemy.takeDamage(damage, Math.cos(angle)*kForce, Math.sin(angle)*kForce);
+                            this.ui.spawnFloatingText(enemy.x, enemy.y, Math.floor(damage), CONFIG.COLORS.TEXT_DAMAGE);
+                            
+                            if (proj.pierce > 0) {
+                                proj.pierce--;
+                                proj.hitList.push(enemy);
+                            } else {
+                                proj.markedForDeletion = true;
+                            }
+                            
+                            if (enemy.hp <= 0 && !enemy.alreadyDead) {
+                                this.killEnemy(enemy);
                             }
                         }
                     }
@@ -183,6 +187,38 @@ window.SURVIVAL = window.SURVIVAL || {};
             
             // Clean up pickups in controller
             this.enemies.pickups = this.enemies.pickups.filter(p => !p.markedForDeletion);
+        }
+
+        createExplosion(x, y, radius, damage) {
+            // visual effect (simple circle for now)
+            // TODO: Add visual manager for explosions
+            
+            // Damage area
+            this.enemies.enemies.forEach(enemy => {
+                const dist = Utils.getDistance(x, y, enemy.x, enemy.y);
+                if (dist <= radius) {
+                    // Falloff damage? No, full damage for satisfying explosions
+                    const angle = Utils.getAngle(x, y, enemy.x, enemy.y);
+                    const kForce = 5; // Big knockback for explosions
+                    
+                    enemy.takeDamage(damage, Math.cos(angle)*kForce, Math.sin(angle)*kForce);
+                    this.ui.spawnFloatingText(enemy.x, enemy.y, Math.floor(damage), '#ff5722'); // Orange text
+                    
+                    if (enemy.hp <= 0 && !enemy.alreadyDead) {
+                        this.killEnemy(enemy);
+                    }
+                }
+            });
+        }
+
+        killEnemy(enemy) {
+            enemy.alreadyDead = true; 
+            this.kills++;
+            // Drop XP / Gold
+            this.enemies.pickups.push(new Pickup(enemy.x, enemy.y, 'xp', enemy.xp));
+            if (Math.random() < enemy.goldChance) {
+                 this.enemies.pickups.push(new Pickup(enemy.x + 5, enemy.y + 5, 'gold', 10));
+            }
         }
 
         draw() {
