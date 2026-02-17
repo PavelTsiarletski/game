@@ -27,7 +27,7 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.currentHp = this.stats.hp;
             
             this.xp = 0;
-            this.maxXp = 50;
+            this.maxXp = 30;
             this.level = 1;
 
             this.isDead = false;
