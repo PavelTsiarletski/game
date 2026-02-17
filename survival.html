@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cell Survival Clone</title>
+    <link rel="stylesheet" href="css/survival/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Main Menu -->
+        <div id="main-menu" class="screen">
+            <h1>CELL SURVIVAL</h1>
+            <button id="start-btn" class="btn">START GAME</button>
+            <button id="shop-btn" class="btn">UPGRADE SHOP</button>
+        </div>
+
+        <!-- Shop Screen -->
+        <div id="shop-screen" class="screen hidden">
+            <h2>UPGRADES</h2>
+            <div id="currency-display">Gold: <span id="shop-gold">0</span></div>
+            <div id="upgrades-container">
+                <!-- Upgrades injected here -->
+            </div>
+            <button id="back-btn" class="btn">BACK</button>
+        </div>
+
+        <!-- HUD -->
+        <div id="hud" class="hidden">
+            <div class="top-bar">
+                <div class="xp-container">
+                    <div id="xp-bar-fill"></div>
+                    <span id="level-display">LVL 1</span>
+                </div>
+                <div class="timer" id="game-timer">00:00</div>
+                <div class="kill-count">Kills: <span id="kills">0</span></div>
+            </div>
+            <div class="health-container">
+                 <div id="health-bar-fill"></div>
+                 <span id="health-text">100/100</span>
+            </div>
+        </div>
+
+        <!-- Level Up Screen -->
+        <div id="level-up-screen" class="screen hidden">
+            <h2>LEVEL UP!</h2>
+            <div id="cards-container">
+                <!-- Cards injected here -->
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="screen hidden">
+            <h2>GAME OVER</h2>
+            <p>You Survived: <span id="final-time">00:00</span></p>
+            <p>Gold Earned: <span id="gold-earned">0</span></p>
+            <button id="restart-btn" class="btn">TRY AGAIN</button>
+            <button id="menu-btn" class="btn">MAIN MENU</button>
+        </div>
+        
+        <!-- Pause Screen -->
+         <div id="pause-screen" class="screen hidden">
+            <h2>PAUSED</h2>
+            <button id="resume-btn" class="btn">RESUME</button>
+            <button id="quit-btn" class="btn">QUIT</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/survival/config.js"></script>
+    <script type="module" src="js/survival/utils.js"></script>
+    <script type="module" src="js/survival/weapon.js"></script>
+    <script type="module" src="js/survival/player.js"></script>
+    <script type="module" src="js/survival/enemy.js"></script>
+    <script type="module" src="js/survival/ui.js"></script>
+    <script type="module" src="js/survival/game.js"></script>
+</body>
+</html>
