@@ -128,9 +128,9 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.elements.upgradesContainer.innerHTML = '';
 
             const upgrades = [
-                { id: 'damage', name: 'Increase Damage', cost: 50, key: 'damageMultiplier', inc: 0.1 },
-                { id: 'health', name: 'Max Health', cost: 50, key: 'maxHpMultiplier', inc: 0.1 },
-                { id: 'speed', name: 'Movement Speed', cost: 75, key: 'speedMultiplier', inc: 0.05 },
+                { id: 'damage', name: 'Increase Damage', cost: 10, key: 'damageMultiplier', inc: 0.1 },
+                { id: 'health', name: 'Max Health', cost: 10, key: 'maxHpMultiplier', inc: 0.1 },
+                { id: 'speed', name: 'Movement Speed', cost: 20, key: 'speedMultiplier', inc: 0.05 },
             ];
 
             upgrades.forEach(upg => {
