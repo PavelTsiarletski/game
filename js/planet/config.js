@@ -56,9 +56,30 @@ window.Game.PlanetConfig = (function(){
         {
             id: "life",
             name: "Biosphere",
-            threshold: 10000000,
+            threshold: 10000000, // 10M
             desc: "Simple life begins to thrive.",
             color: "#00b894"
+        },
+        {
+            id: "lush",
+            name: "Lush Biosphere",
+            threshold: 50000000, // 50M
+            desc: "Forests cover the continents.",
+            color: "#27ae60" // Darker Green
+        },
+        {
+            id: "civilization",
+            name: "Civilization",
+            threshold: 250000000, // 250M
+            desc: "Cities light up the night.",
+            color: "#dfe6e9" // White-ish/Grey (cities)
+        },
+        {
+            id: "technosphere",
+            name: "Technosphere",
+            threshold: 1000000000, // 1B
+            desc: "A machine world of pure efficiency.",
+            color: "#0984e3" // Cyan/Electric Blue
         }
     ];
 
