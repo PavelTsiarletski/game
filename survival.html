@@ -9,6 +9,9 @@
 </head>
 <body>
     <div id="game-container">
+        <!-- Back Button -->
+        <a href="index.html" class="btn" style="position: absolute; top: 10px; left: 10px; z-index: 20; text-decoration: none; padding: 0.5rem 1rem; font-size: 0.8rem;">← MENU</a>
+
         <canvas id="gameCanvas"></canvas>
 
         <!-- Main Menu -->
@@ -69,13 +72,13 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script type="module" src="js/survival/config.js"></script>
-    <script type="module" src="js/survival/utils.js"></script>
-    <script type="module" src="js/survival/weapon.js"></script>
-    <script type="module" src="js/survival/player.js"></script>
-    <script type="module" src="js/survival/enemy.js"></script>
-    <script type="module" src="js/survival/ui.js"></script>
-    <script type="module" src="js/survival/game.js"></script>
+    <!-- Scripts (Order Matters!) -->
+    <script src="js/survival/config.js"></script>
+    <script src="js/survival/utils.js"></script>
+    <script src="js/survival/weapon.js"></script>
+    <script src="js/survival/player.js"></script>
+    <script src="js/survival/enemy.js"></script>
+    <script src="js/survival/ui.js"></script>
+    <script src="js/survival/game.js"></script>
 </body>
 </html>

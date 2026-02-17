@@ -1,4 +1,6 @@
-export const CONFIG = {
+window.SURVIVAL = window.SURVIVAL || {};
+
+window.SURVIVAL.Config = {
     CANVAS_WIDTH: 1280,
     CANVAS_HEIGHT: 720,
     FPS: 60,

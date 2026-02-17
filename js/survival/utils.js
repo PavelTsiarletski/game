@@ -1,4 +1,6 @@
-export const Utils = {
+window.SURVIVAL = window.SURVIVAL || {};
+
+window.SURVIVAL.Utils = {
     // Math Helpers
     clamp(value, min, max) {
         return Math.min(Math.max(value, min), max);
