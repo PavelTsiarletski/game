@@ -63,49 +63,49 @@ window.Game.PlanetConfig = (function(){
         {
             id: "lush",
             name: "Lush Biosphere",
-            threshold: 50000000, // 50M
+            threshold: 100000000, // 100M
             desc: "Forests cover the continents.",
             color: "#27ae60" // Darker Green
         },
         {
             id: "civilization",
             name: "Civilization",
-            threshold: 250000000, // 250M
+            threshold: 1000000000, // 1B
             desc: "Cities light up the night.",
             color: "#dfe6e9" // White-ish/Grey (cities)
         },
         {
             id: "technosphere",
             name: "Technosphere",
-            threshold: 1000000000, // 1B
+            threshold: 10000000000, // 10B
             desc: "A machine world of pure efficiency.",
             color: "#0984e3" // Cyan/Electric Blue
         },
         {
             id: "ecumenopolis",
             name: "Ecumenopolis",
-            threshold: 10000000000, // 10B
+            threshold: 100000000000, // 100B
             desc: "A planetary-wide city.",
             color: "#636e72" // Metal/Grey
         },
         {
             id: "dyson",
             name: "Dyson Swarm",
-            threshold: 50000000000, // 50B
+            threshold: 1000000000000, // 1T
             desc: "Harvesting the power of the sun.",
             color: "#fdcb6e" // Gold/Solar
         },
         {
             id: "blackhole",
             name: "Singularity",
-            threshold: 1000000000000, // 1T
+            threshold: 100000000000000, // 100T
             desc: "Collapse into infinite density.",
             color: "#000000" // Black
         },
         {
             id: "ascension",
             name: "Ascension",
-            threshold: 100000000000000, // 100T
+            threshold: 10000000000000000, // 10Qa (Quadrillion) -> 1e16
             desc: "Pure energy. The end of matter.",
             color: "#ffffff" // White/Light
         }
