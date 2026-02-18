@@ -243,48 +243,89 @@ window.SURVIVAL = window.SURVIVAL || {};
         triggerLevelUp() {
             this.gameState = 'LEVEL_UP';
             
-            // Generate random options
             const options = [];
-            const weaponKeys = Object.keys(CONFIG.WEAPONS);
+            const ownedWeapons = this.weapons.weapons;
+            const allWeaponKeys = Object.keys(CONFIG.WEAPONS);
             
-            for(let i=0; i<3; i++) {
-                const isNewWeapon = Math.random() > 0.5;
-                // Always allow getting new weapons if we don't have them all?
-                // Simplified logic for prototype:
-                
-                if (isNewWeapon) {
-                    const key = weaponKeys[Math.floor(Math.random() * weaponKeys.length)];
+            // 1. Identify possible upgrades (Existing weapons)
+            const availableUpgrades = ownedWeapons.map(w => ({
+                type: 'upgrade_weapon',
+                name: `Upgrade: ${w.name}`,
+                description: `Stats UP! Level: ${w.level + 1}`,
+                data: w
+            }));
+
+            // 2. Identify possible new weapons (Not owned)
+            const availableNew = allWeaponKeys
+                .filter(key => !ownedWeapons.some(w => w.name === CONFIG.WEAPONS[key].name))
+                .map(key => {
                     const wConfig = CONFIG.WEAPONS[key];
-                    options.push({
+                    return {
                         type: 'new_weapon',
                         name: `New: ${wConfig.name}`,
                         description: `Add ${wConfig.name} to your arsenal.`,
                         data: wConfig
-                    });
-                } else {
-                    // Upgrade current weapon (if any)
-                    if (this.weapons.weapons.length > 0) {
-                        const w = this.weapons.weapons[Math.floor(Math.random() * this.weapons.weapons.length)];
-                        options.push({
-                            type: 'upgrade_weapon',
-                            name: `Upgrade: ${w.name}`,
-                            description: `Stats UP! Level: ${w.level + 1}`,
-                            data: w
-                        });
-                    } else {
-                        // Fallback to new weapon if no weapons to upgrade
-                         const key = weaponKeys[Math.floor(Math.random() * weaponKeys.length)];
-                         const wConfig = CONFIG.WEAPONS[key];
-                         options.push({
-                            type: 'new_weapon',
-                            name: `New: ${wConfig.name}`,
-                            description: `Add ${wConfig.name} to your arsenal.`,
-                            data: wConfig
-                         });
-                    }
+                    };
+                });
+            
+            // 3. Selection Logic (Prioritize Upgrades)
+            // Goal: Show 3 cards. 
+            // If we have upgrades, fill mostly with upgrades.
+            
+            const pool = [];
+            
+            // Add all upgrades to the pool (maybe weighted higher?)
+            // Actually, let's just pick 3 distinct options.
+            // Requirement: "if we received a weapon... only its improvement"
+            // Let's bias strictly: If we have upgrades, fill slots with them first.
+            
+            const slots = 3;
+            
+            // Helper to pick random from array without replacement
+            const pickRandom = (arr) => {
+                if (arr.length === 0) return null;
+                const idx = Math.floor(Math.random() * arr.length);
+                return arr.splice(idx, 1)[0];
+            };
+
+            // Copy arrays so we can splice
+            const possibleUpgrades = [...availableUpgrades];
+            const possibleNew = [...availableNew];
+
+            for (let i = 0; i < slots; i++) {
+                let choice = null;
+                
+                // Strong bias: 80% chance for upgrade if available, OR if no new weapons left
+                const wantUpgrade = Math.random() < 0.8 || possibleNew.length === 0;
+                
+                if (wantUpgrade && possibleUpgrades.length > 0) {
+                    choice = pickRandom(possibleUpgrades);
+                } else if (possibleNew.length > 0) {
+                    choice = pickRandom(possibleNew);
+                } else if (possibleUpgrades.length > 0) {
+                    // Fallback to upgrade if we wanted new but none left
+                    choice = pickRandom(possibleUpgrades);
+                }
+                
+                if (choice) {
+                    options.push(choice);
                 }
             }
             
+            // Edge Case: If we didn't fill 3 slots (e.g. only 1 weapon owned and 0 new available),
+            // We might just show 1 or 2 cards. That's fine.
+            
+            // If completely empty (maxed everything? impossible design-wise currently), generate fallback?
+            if (options.length === 0) {
+                // Should not happen with current logic unless config is broken
+                options.push({
+                   type: 'heal',
+                   name: 'Full Heal',
+                   description: 'Restore 100% HP',
+                   data: null 
+                });
+            }
+
             this.ui.showLevelUp(options);
         }
 
@@ -294,6 +335,8 @@ window.SURVIVAL = window.SURVIVAL || {};
             } else if (option.type === 'upgrade_weapon') {
                 // option.data is the weapon instance itself
                 option.data.upgrade();
+            } else if (option.type === 'heal') {
+                this.player.currentHp = this.player.stats.hp;
             }
             
             this.gameState = 'PLAYING';
