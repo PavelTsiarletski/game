@@ -139,6 +139,27 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.weapons.update(performance.now(), this.player, this.enemies.enemies);
             this.enemies.update(this.player);
 
+            // Pickup Magnet Logic
+            // Calculate effective range: Base pickup range OR Blaster range (Attack Zone)
+            let blasterRange = 0;
+            const blaster = this.weapons.weapons.find(w => w.name === 'Blaster');
+            if (blaster) {
+                blasterRange = blaster.range * (this.player.stats.rangeMultiplier || 1);
+            }
+
+            const basePickupRange = this.player.stats.pickupRange || 100;
+            const effectiveRange = Math.max(basePickupRange, blasterRange);
+
+            this.enemies.pickups.forEach(p => {
+                const dist = Utils.getDistance(this.player.x, this.player.y, p.x, p.y);
+                if (dist < effectiveRange) {
+                    const angle = Utils.getAngle(p.x, p.y, this.player.x, this.player.y);
+                    const speed = 6 + (this.player.level * 0.1); 
+                    p.x += Math.cos(angle) * speed;
+                    p.y += Math.sin(angle) * speed;
+                }
+            });
+
             this.checkCollisions();
             this.checkCollisions();
             this.ui.updateHUD(this.player, Utils.formatTime(this.gameTime), this.kills, this.weapons.weapons);
@@ -269,18 +290,16 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.enemies.draw(this.ctx);
             
             // Draw Attack Zone (Visual Indicator)
-            // Draw largest range of current weapons? Or just a base ring?
-            // "show visually this zone" - implies the effective range.
-            // If multiple weapons, maybe draw range of the longest one?
-            let maxRange = 0;
-            this.weapons.weapons.forEach(w => {
-                 // Calculate actual range including bonuses
-                 const r = w.range * (this.player.stats.rangeMultiplier || 1);
-                 if (r > maxRange) maxRange = r;
-            });
-            if (maxRange > 0) {
+            // "show visually this zone" - implies the effective range of Blaster
+            let blasterRange = 0;
+            const blaster = this.weapons.weapons.find(w => w.name === 'Blaster');
+            if (blaster) {
+                blasterRange = blaster.range * (this.player.stats.rangeMultiplier || 1);
+            }
+
+            if (blasterRange > 0) {
                 this.ctx.beginPath();
-                this.ctx.arc(this.player.x, this.player.y, maxRange, 0, Math.PI * 2);
+                this.ctx.arc(this.player.x, this.player.y, blasterRange, 0, Math.PI * 2);
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
                 this.ctx.lineWidth = 2;
                 this.ctx.setLineDash([10, 10]);

@@ -67,11 +67,37 @@ window.SURVIVAL = window.SURVIVAL || {};
             if(getEl('menu-btn')) getEl('menu-btn').addEventListener('click', () => this.showMenu());
             if(getEl('resume-btn')) getEl('resume-btn').addEventListener('click', () => this.game.togglePause()); // Resume
             if(getEl('quit-btn')) getEl('quit-btn').addEventListener('click', () => this.showMenu());
+            
+            // Global Back Button
+            if(getEl('global-back-btn')) {
+                getEl('global-back-btn').addEventListener('click', () => {
+                    if (this.game.gameState === 'MENU') {
+                        // If in Main Menu, go to Index
+                        window.location.href = 'index.html';
+                    } else if (this.game.gameState === 'PLAYING') {
+                        // If successfully playing, Toggle Pause
+                        this.game.togglePause();
+                    } else if (this.game.gameState === 'PAUSED') {
+                        // Already paused? maybe go to menu? Or just Resume?
+                        // "Exit from round to menu" -> showMenu
+                        // Let's make it intuitive: "Back" usually means "Back to Menu"
+                        // But clicking it twice (Pause -> Menu) is safer.
+                        // Let's just toggle pause if paused (resume) or show menu?
+                        // User request: "button to menu".
+                        // If I click "Menu" button while playing, it should probably PAUSE and show "Quit to Menu".
+                        this.game.togglePause(); // Will unpause if paused
+                    } else {
+                        // Game Over or Level Up
+                        this.showMenu();
+                    }
+                });
+            }
         }
 
         showMenu() {
             this.hideAll();
             this.elements.mainMenu.classList.remove('hidden');
+            if(document.getElementById('global-back-btn')) document.getElementById('global-back-btn').textContent = '← EXIT';
         }
 
         showShop() {
@@ -83,6 +109,7 @@ window.SURVIVAL = window.SURVIVAL || {};
         showHUD() {
             this.hideAll();
             this.elements.hud.classList.remove('hidden');
+            if(document.getElementById('global-back-btn')) document.getElementById('global-back-btn').textContent = 'II MENU';
         }
 
         showLevelUp(options) {
@@ -174,21 +201,73 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.elements.upgradesContainer.innerHTML = '';
 
             const upgrades = [
-                { id: 'damage', name: 'Increase Damage', cost: 10, key: 'damageMultiplier', inc: 0.1 },
-                { id: 'health', name: 'Max Health', cost: 10, key: 'maxHpMultiplier', inc: 0.1 },
-                { id: 'speed', name: 'Movement Speed', cost: 20, key: 'speedMultiplier', inc: 0.05 },
-                // New Upgrades
-                { id: 'range', name: 'Attack Zone', cost: 15, key: 'rangeMultiplier', inc: 0.1 },
-                { id: 'amount', name: 'Ammo Stock (+Count)', cost: 100, key: 'amountBonus', inc: 1 },
-                { id: 'pierce', name: 'Piercing Rounds', cost: 80, key: 'penetrationBonus', inc: 1 },
-                { id: 'knockback', name: 'Heavy Impact', cost: 50, key: 'knockbackMultiplier', inc: 0.2 },
+                { 
+                    id: 'damage', 
+                    name: 'Damage', 
+                    cost: 10, 
+                    key: 'damageMultiplier', 
+                    inc: 0.1,
+                    desc: "Increases damage of all weapons.",
+                    format: (v) => `Multiplier: ${Math.round(v * 100)}%` 
+                },
+                { 
+                    id: 'health', 
+                    name: 'Max Health', 
+                    cost: 10, 
+                    key: 'maxHpMultiplier', 
+                    inc: 0.1,
+                    desc: "Increases your maximum Hit Points.",
+                    format: (v) => `Multiplier: ${Math.round(v * 100)}%`
+                },
+
+                { 
+                    id: 'range', 
+                    name: 'Attack Zone', 
+                    cost: 15, 
+                    key: 'rangeMultiplier', 
+                    inc: 0.15,
+                    desc: "Increases the effective range of your weapons.",
+                    format: (v) => `Range: ${Math.round(v * 100)}%`
+                },
+                { 
+                    id: 'amount', 
+                    name: 'Ammo Stock', 
+                    cost: 100, 
+                    key: 'amountBonus', 
+                    inc: 1,
+                    desc: "Adds more projectiles to every shot.",
+                    format: (v) => `Bonus Proj: +${v}`
+                },
+                { 
+                    id: 'pierce', 
+                    name: 'Piercing Rounds', 
+                    cost: 80, 
+                    key: 'penetrationBonus', 
+                    inc: 1,
+                    desc: "Projectiles pass through more enemies.",
+                    format: (v) => `Pierce: +${v}`
+                },
+                { 
+                    id: 'knockback', 
+                    name: 'Heavy Impact', 
+                    cost: 50, 
+                    key: 'knockbackMultiplier', 
+                    inc: 0.2,
+                    desc: "Pushes enemies back further when hit.",
+                    format: (v) => `Force: ${Math.round(v * 100)}%`
+                },
             ];
 
             upgrades.forEach(upg => {
-                const currentVal = stats[upg.key] || 1;
+                const currentVal = stats[upg.key] !== undefined ? stats[upg.key] : (upg.key.includes('Multiplier') ? 1 : 0);
+                // Fix for bonus stats that start at 0 but might be undefined in old saves
+                // Actually persistence check handles defaulting to 0/1 in player.js logic? 
+                // Let's assume stats object has correct values or we default them here for display.
+                
                 // Scale cost based on current multiplier level
-                // (currentVal - 1) / inc gives number of upgrades bought approximately
-                const upgradesBought = Math.round((currentVal - 1) / upg.inc);
+                // (currentVal - base) / inc
+                const baseVal = upg.key.includes('Multiplier') ? 1 : 0;
+                const upgradesBought = Math.max(0, Math.round((currentVal - baseVal) / upg.inc));
                 // Linear cost scaling: Base + (Bought * Base * 0.5)
                 const currentCost = Math.floor(upg.cost + (upgradesBought * upg.cost * 0.5)); 
 
@@ -196,8 +275,9 @@ window.SURVIVAL = window.SURVIVAL || {};
                 item.className = 'shop-item';
                 item.innerHTML = `
                     <h3>${upg.name}</h3>
-                    <p>Current: ${(currentVal * 100).toFixed(0)}%</p>
-                    <p>Cost: ${currentCost} G</p>
+                    <p style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">${upg.desc}</p>
+                    <p style="color:#fff; font-weight:bold;">${upg.format(currentVal)}</p>
+                    <p style="color:#ffd700; margin-top:5px;">Cost: ${currentCost} G</p>
                     <button class="btn" ${stats.gold < currentCost ? 'disabled' : ''}>BUY</button>
                 `;
                 
@@ -210,7 +290,12 @@ window.SURVIVAL = window.SURVIVAL || {};
                 btn.addEventListener('click', () => {
                     if (stats.gold >= currentCost) {
                         this.game.player.persistentStats.gold -= currentCost;
-                        this.game.player.persistentStats[upg.key] += upg.inc;
+                        
+                        // Increment
+                        let val = this.game.player.persistentStats[upg.key];
+                        if (val === undefined) val = baseVal;
+                        this.game.player.persistentStats[upg.key] = val + upg.inc;
+                        
                         this.game.player.saveProfile();
                         this.renderShop(); // Refresh
                     }

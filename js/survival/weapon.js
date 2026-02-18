@@ -125,10 +125,14 @@ window.SURVIVAL = window.SURVIVAL || {};
                 const angle = Utils.getAngle(player.x, player.y, nearest.x, nearest.y);
                 const projectiles = [];
                 
-                // Handle multi-shot / spread
-                const startAngle = angle - (this.spread / 2);
-                const step = finalCount > 1 ? this.spread / (finalCount - 1) : 0;
+                // Handle firing modes: 
+                // Spread > 0: Fan (Shotgun)
+                // Spread == 0: Parallel (Pistol with multi-projectile upgrade)
+                
+                const isParallel = this.spread === 0;
+                const spacing = 15; // Pixel spacing for parallel shots
 
+                // Base stats for all projectiles
                 const projStats = {
                     speed: this.speed,
                     damage: this.damage,
@@ -141,8 +145,27 @@ window.SURVIVAL = window.SURVIVAL || {};
                 };
 
                 for (let i = 0; i < finalCount; i++) {
-                    const currentAngle = finalCount > 1 ? startAngle + (step * i) : angle;
-                    projectiles.push(new Projectile(player.x, player.y, currentAngle, projStats));
+                    let startX = player.x;
+                    let startY = player.y;
+                    let currentAngle = angle;
+
+                    if (isParallel) {
+                        // Calculate perpendicular offset
+                        // Perpendicular to angle: angle + 90deg (PI/2)
+                        const offset = (i - (finalCount - 1) / 2) * spacing;
+                        const perpAngle = angle + Math.PI / 2;
+                        
+                        startX += Math.cos(perpAngle) * offset;
+                        startY += Math.sin(perpAngle) * offset;
+                        // Angle remains the same for parallel shots
+                    } else {
+                        // Fan logic
+                        const startSpreadAngle = angle - (this.spread / 2);
+                        const step = finalCount > 1 ? this.spread / (finalCount - 1) : 0;
+                        currentAngle = finalCount > 1 ? startSpreadAngle + (step * i) : angle;
+                    }
+
+                    projectiles.push(new Projectile(startX, startY, currentAngle, projStats));
                 }
                 return projectiles;
             }

@@ -74,7 +74,7 @@ window.SURVIVAL.Config = {
             damage: 10,
             cooldown: 500, // ms
             speed: 8,
-            range: 400,
+            range: 220, // Reduced from 400
             color: '#ffff00',
             spread: 0,
             count: 1,
@@ -86,7 +86,7 @@ window.SURVIVAL.Config = {
             damage: 8,
             cooldown: 1000,
             speed: 7,
-            range: 300,
+            range: 180, // Reduced from 300
             color: '#ffca28',
             spread: 0.5, // Radians
             count: 5,
@@ -98,7 +98,7 @@ window.SURVIVAL.Config = {
             damage: 5,
             cooldown: 100,
             speed: 10,
-            range: 500,
+            range: 300, // Reduced from 500
             color: '#4fc3f7',
             spread: 0.1,
             count: 1,
@@ -121,7 +121,7 @@ window.SURVIVAL.Config = {
             damage: 100, // One shot kills early
             cooldown: 1500,
             speed: 25, // Instant feel
-            range: 1000,
+            range: 600, // Reduced from 1000
             color: '#ff00ff', // Magenta
             spread: 0,
             count: 1,
@@ -133,7 +133,7 @@ window.SURVIVAL.Config = {
             damage: 30,
             cooldown: 1200,
             speed: 6,
-            range: 500,
+            range: 350, // Reduced from 500
             color: '#ff5722', // Deep Orange
             spread: 0,
             count: 1,

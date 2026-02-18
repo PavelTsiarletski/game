@@ -131,7 +131,15 @@ window.SURVIVAL = window.SURVIVAL || {};
         loadProfile() {
             const data = localStorage.getItem('cellSurvivalProfile');
             if (data) {
-                this.persistentStats = JSON.parse(data);
+                const saved = JSON.parse(data);
+                // Merge saved stats with defaults to ensure new fields (like rangeMultiplier) exist
+                this.persistentStats = { ...this.persistentStats, ...saved };
+                
+                // Sanity checks / fixes for old save data
+                if (this.persistentStats.rangeMultiplier < 1) this.persistentStats.rangeMultiplier = 1;
+                if (this.persistentStats.damageMultiplier < 1) this.persistentStats.damageMultiplier = 1;
+                if (this.persistentStats.maxHpMultiplier < 1) this.persistentStats.maxHpMultiplier = 1;
+                if (this.persistentStats.knockbackMultiplier < 1) this.persistentStats.knockbackMultiplier = 1;
             }
         }
     }
