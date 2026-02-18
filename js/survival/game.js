@@ -41,10 +41,38 @@ window.SURVIVAL = window.SURVIVAL || {};
         }
 
         handleResize() {
+            // Adaptive Mobile Design
+            // Strategy: Maintain aspect ratio or fit width?
+            // "Decrease to fit all content" -> Fit everything within view.
+            
             this.canvas.width = window.innerWidth;
             this.canvas.height = window.innerHeight;
             CONFIG.CANVAS_WIDTH = window.innerWidth;
             CONFIG.CANVAS_HEIGHT = window.innerHeight;
+
+            // Optional: You could scale the context here if you wanted a fixed logic resolution
+            // but for this game, simply resizing canvas works because entities are relative to pixels.
+            // However, to make field "smaller" visually on mobile (so you see more area relative to player size?)
+            // or "fit content"? 
+            // The user said: "make adaptive mobile design for field (can reduce to fit all game content)"
+            // Use CSS transform to fit? Or logic scale?
+            // Let's rely on standard resizing but ensure UI scales.
+            // The best way for "fit all content" is often to zoom out.
+            // Let's add a scale factor if width is small.
+            
+            this.scale = 1;
+            if (window.innerWidth < 600) {
+                 this.scale = window.innerWidth / 600; // Zoom out to show at least 600px worth of width? 
+                 // Actually, if we zoom out, everything gets smaller.
+                 // User wants "Decrease to fit all content" -> simple resize usually handles this if camera follows player.
+                 // But here there is no camera, it's a fixed screen?
+                 // Player moves around the screen `this.x`, `this.y`.
+                 // `Utils.checkBounds` uses CONFIG.CANVAS_WIDTH.
+                 // So the field exits ONLY within the canvas.
+                 // So "fit all content" just means the canvas IS the field. 
+                 // Simple resize is sufficient for "fitting", but maybe things are too big?
+                 // Let's leave as is for now, standard resize matches "field fits screen".
+            }
         }
 
         bindInputs() {
@@ -112,7 +140,8 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.enemies.update(this.player);
 
             this.checkCollisions();
-            this.ui.updateHUD(this.player, Utils.formatTime(this.gameTime), this.kills);
+            this.checkCollisions();
+            this.ui.updateHUD(this.player, Utils.formatTime(this.gameTime), this.kills, this.weapons.weapons);
 
             if (this.player.isDead) {
                 this.endGame();
@@ -137,7 +166,9 @@ window.SURVIVAL = window.SURVIVAL || {};
                         
                         if (proj.explosive) {
                             // EXPLOSION LOGIC
-                            this.createExplosion(proj.x, proj.y, proj.explosionRadius, proj.damage * (this.player.persistentStats.damageMultiplier || 1));
+                            // Use projectile specific knockback or default high value for explosion
+                            const kForce = proj.knockback ? proj.knockback * 2.5 : 5; 
+                            this.createExplosion(proj.x, proj.y, proj.explosionRadius, proj.damage * (this.player.persistentStats.damageMultiplier || 1), kForce);
                             proj.markedForDeletion = true;
                         } else {
                             // Standard Projectile Logic
@@ -145,7 +176,7 @@ window.SURVIVAL = window.SURVIVAL || {};
                             
                             // Knockback vector
                             const angle = Utils.getAngle(proj.x, proj.y, enemy.x, enemy.y);
-                            const kForce = 2; 
+                            const kForce = proj.knockback || 2; 
                             
                             enemy.takeDamage(damage, Math.cos(angle)*kForce, Math.sin(angle)*kForce);
                             this.ui.spawnFloatingText(enemy.x, enemy.y, Math.floor(damage), CONFIG.COLORS.TEXT_DAMAGE);
@@ -189,7 +220,7 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.enemies.pickups = this.enemies.pickups.filter(p => !p.markedForDeletion);
         }
 
-        createExplosion(x, y, radius, damage) {
+        createExplosion(x, y, radius, damage, knockbackVal) {
             // visual effect (simple circle for now)
             // TODO: Add visual manager for explosions
             
@@ -199,7 +230,7 @@ window.SURVIVAL = window.SURVIVAL || {};
                 if (dist <= radius) {
                     // Falloff damage? No, full damage for satisfying explosions
                     const angle = Utils.getAngle(x, y, enemy.x, enemy.y);
-                    const kForce = 5; // Big knockback for explosions
+                    const kForce = knockbackVal || 5; // Big knockback for explosions
                     
                     enemy.takeDamage(damage, Math.cos(angle)*kForce, Math.sin(angle)*kForce);
                     this.ui.spawnFloatingText(enemy.x, enemy.y, Math.floor(damage), '#ff5722'); // Orange text
@@ -236,6 +267,27 @@ window.SURVIVAL = window.SURVIVAL || {};
             }
 
             this.enemies.draw(this.ctx);
+            
+            // Draw Attack Zone (Visual Indicator)
+            // Draw largest range of current weapons? Or just a base ring?
+            // "show visually this zone" - implies the effective range.
+            // If multiple weapons, maybe draw range of the longest one?
+            let maxRange = 0;
+            this.weapons.weapons.forEach(w => {
+                 // Calculate actual range including bonuses
+                 const r = w.range * (this.player.stats.rangeMultiplier || 1);
+                 if (r > maxRange) maxRange = r;
+            });
+            if (maxRange > 0) {
+                this.ctx.beginPath();
+                this.ctx.arc(this.player.x, this.player.y, maxRange, 0, Math.PI * 2);
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([10, 10]);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+            }
+
             this.weapons.draw(this.ctx);
             this.player.draw(this.ctx);
         }

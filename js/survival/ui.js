@@ -21,6 +21,9 @@ window.SURVIVAL = window.SURVIVAL || {};
                 kills: document.getElementById('kills'),
                 healthBar: document.getElementById('health-bar-fill'),
                 healthText: document.getElementById('health-text'),
+                weaponsList: document.getElementById('weapons-list'), // New container needs to be created dynamically if not exists or assume user adds it? 
+                // Wait, I can't edit HTML file. I should create this element dynamically in the HUD.
+
                 
                 // Containers
                 cardsContainer: document.getElementById('cards-container'),
@@ -33,7 +36,24 @@ window.SURVIVAL = window.SURVIVAL || {};
             };
 
             this.floatingTexts = [];
+            this.ensureUIElements();
             this.bindEvents();
+        }
+
+        ensureUIElements() {
+             // Create weapons list container if missing
+             if (!document.getElementById('weapons-list')) {
+                 const list = document.createElement('div');
+                 list.id = 'weapons-list';
+                 list.style.position = 'absolute';
+                 list.style.bottom = '80px'; 
+                 list.style.left = '20px';
+                 list.style.display = 'flex';
+                 list.style.gap = '10px';
+                 list.style.pointerEvents = 'none'; // Don't block clicks
+                 this.elements.hud.appendChild(list);
+                 this.elements.weaponsList = list;
+             }
         }
 
         bindEvents() {
@@ -105,7 +125,7 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.elements.hud.classList.add('hidden');
         }
 
-        updateHUD(player, time, kills) {
+        updateHUD(player, time, kills, weapons) {
             // XP
             const xpPercent = (player.xp / player.maxXp) * 100;
             this.elements.xpBar.style.width = `${xpPercent}%`;
@@ -119,6 +139,32 @@ window.SURVIVAL = window.SURVIVAL || {};
             // Stats
             this.elements.timer.textContent = time;
             this.elements.kills.textContent = kills;
+            
+            // Update Weapons List
+            if (this.elements.weaponsList && weapons) {
+                // simple render: Clear and redraw? Or optimize?
+                // For now, redraw matches simple style
+                this.elements.weaponsList.innerHTML = '';
+                weapons.forEach(w => {
+                    const el = document.createElement('div');
+                    el.className = 'weapon-icon';
+                    el.style.background = 'rgba(0,0,0,0.5)';
+                    el.style.border = `2px solid ${CONFIG.COLORS.PLAYER}`;
+                    el.style.borderRadius = '5px';
+                    el.style.padding = '5px';
+                    el.style.color = '#fff';
+                    el.style.fontSize = '12px';
+                    el.style.display = 'flex';
+                    el.style.flexDirection = 'column';
+                    el.style.alignItems = 'center';
+                    
+                    el.innerHTML = `
+                        <span style="font-weight:bold">${w.name}</span>
+                        <span>Lvl ${w.level}</span>
+                    `;
+                    this.elements.weaponsList.appendChild(el);
+                });
+            }
         }
 
         renderShop() {
@@ -131,6 +177,11 @@ window.SURVIVAL = window.SURVIVAL || {};
                 { id: 'damage', name: 'Increase Damage', cost: 10, key: 'damageMultiplier', inc: 0.1 },
                 { id: 'health', name: 'Max Health', cost: 10, key: 'maxHpMultiplier', inc: 0.1 },
                 { id: 'speed', name: 'Movement Speed', cost: 20, key: 'speedMultiplier', inc: 0.05 },
+                // New Upgrades
+                { id: 'range', name: 'Attack Zone', cost: 15, key: 'rangeMultiplier', inc: 0.1 },
+                { id: 'amount', name: 'Ammo Stock (+Count)', cost: 100, key: 'amountBonus', inc: 1 },
+                { id: 'pierce', name: 'Piercing Rounds', cost: 80, key: 'penetrationBonus', inc: 1 },
+                { id: 'knockback', name: 'Heavy Impact', cost: 50, key: 'knockbackMultiplier', inc: 0.2 },
             ];
 
             upgrades.forEach(upg => {

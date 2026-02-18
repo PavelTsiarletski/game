@@ -11,6 +11,11 @@ window.SURVIVAL = window.SURVIVAL || {};
                 damageMultiplier: 1,
                 maxHpMultiplier: 1,
                 speedMultiplier: 1,
+                // New Stats
+                rangeMultiplier: 1,      // Attack Zone
+                penetrationBonus: 0,     // Pierce count
+                amountBonus: 0,          // Projectile count
+                knockbackMultiplier: 1,  // Knockback force
                 gold: 0
             };
             this.loadProfile();
@@ -38,6 +43,12 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.stats.hp = Math.floor(CONFIG.PLAYER_DEFAULTS.hp * this.persistentStats.maxHpMultiplier);
             this.currentHp = this.stats.hp; // Heal on start
             this.stats.speed = CONFIG.PLAYER_DEFAULTS.speed * this.persistentStats.speedMultiplier;
+            
+            // Apply other stats to Weapons later or store in player for access
+            this.stats.rangeMultiplier = this.persistentStats.rangeMultiplier;
+            this.stats.penetrationBonus = this.persistentStats.penetrationBonus;
+            this.stats.amountBonus = this.persistentStats.amountBonus;
+            this.stats.knockbackMultiplier = this.persistentStats.knockbackMultiplier;
         }
 
         handleInput(keys) {

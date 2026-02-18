@@ -22,6 +22,7 @@ window.SURVIVAL = window.SURVIVAL || {};
             // Explosive properties
             this.explosive = stats.explosive || false;
             this.explosionRadius = stats.explosionRadius || 0;
+            this.knockback = stats.knockback || 0; // Default knockback
         }
 
         update(dt) {
@@ -52,18 +53,40 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.lastFired = 0;
             
             // Dynamic Stats
+            // Dynamic Stats
             this.damage = config.damage;
             this.cooldown = config.cooldown;
             this.count = config.count;
+            this.range = config.range;
+            this.spread = config.spread;
+            this.speed = config.speed;
+            this.pierce = config.pierce;
+            this.explosive = config.explosive;
+            this.explosionRadius = config.explosionRadius;
+            this.color = config.color;
         }
 
         upgrade() {
             this.level++;
-            this.damage *= 1.2;
-            this.config.damage = this.damage;
-            // Simple upgrade logic: alternating upgrades
-            if (this.level % 3 === 0) this.count++; 
-            else this.cooldown *= 0.9;
+            // Damage scaling
+            this.damage *= 1.2; 
+            
+            // Logic for other stats based on level
+            // Level 2, 5, 8...: +1 Count
+            if (this.level % 3 === 2) {
+                this.count++;
+            }
+            // Level 3, 6, 9...: Cooldown reduction
+            if (this.level % 3 === 0) {
+                this.cooldown *= 0.9;
+            }
+            // Level 4, 7, 10...: Pierce
+            if (this.level % 3 === 1 && this.level > 1) {
+                 this.pierce++;
+            }
+            // Every level: slight knockback increase? Or specific levels?
+            // Let's add small knockback increase every level to satisfy "upgrade from level"
+            this.knockback = (this.knockback || 2) * 1.05;
         }
         
         // Returns array of projectiles if fired, null otherwise
@@ -79,13 +102,20 @@ window.SURVIVAL = window.SURVIVAL || {};
         }
 
         fire(player, enemies) {
+            // Apply Player Bonuses
+            const pStats = player.stats || {};
+            const finalRange = this.range * (pStats.rangeMultiplier || 1);
+            const finalCount = this.count + (pStats.amountBonus || 0);
+            const finalPierce = this.pierce + (pStats.penetrationBonus || 0);
+            const finalKnockback = 2 * (pStats.knockbackMultiplier || 1); // Base knockback 2
+
             // Find nearest enemy
             let nearest = null;
             let minDist = Infinity;
 
             for (const enemy of enemies) {
                 const dist = Utils.getDistance(player.x, player.y, enemy.x, enemy.y);
-                if (dist < this.config.range && dist < minDist) {
+                if (dist < finalRange && dist < minDist) {
                     minDist = dist;
                     nearest = enemy;
                 }
@@ -96,12 +126,23 @@ window.SURVIVAL = window.SURVIVAL || {};
                 const projectiles = [];
                 
                 // Handle multi-shot / spread
-                const startAngle = angle - (this.config.spread / 2);
-                const step = this.config.count > 1 ? this.config.spread / (this.config.count - 1) : 0;
+                const startAngle = angle - (this.spread / 2);
+                const step = finalCount > 1 ? this.spread / (finalCount - 1) : 0;
 
-                for (let i = 0; i < this.config.count; i++) {
-                    const currentAngle = this.config.count > 1 ? startAngle + (step * i) : angle;
-                    projectiles.push(new Projectile(player.x, player.y, currentAngle, this.config));
+                const projStats = {
+                    speed: this.speed,
+                    damage: this.damage,
+                    pierce: finalPierce,
+                    range: finalRange,
+                    color: this.color,
+                    explosive: this.explosive,
+                    explosionRadius: this.explosionRadius,
+                    knockback: finalKnockback
+                };
+
+                for (let i = 0; i < finalCount; i++) {
+                    const currentAngle = finalCount > 1 ? startAngle + (step * i) : angle;
+                    projectiles.push(new Projectile(player.x, player.y, currentAngle, projStats));
                 }
                 return projectiles;
             }
