@@ -30,6 +30,13 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.goldGainedInRun = 0;
             this.lastLevel = 1;
 
+            // Floating Text System (Canvas based)
+            this.floatingTexts = [];
+            
+            // Spatial Grid
+            // Cell size 100 fits most entities (radius 10-40)
+            this.grid = new window.SURVIVAL.SpatialGrid(CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT, 100);
+
             this.keys = {};
             this.bindInputs();
             
@@ -41,38 +48,13 @@ window.SURVIVAL = window.SURVIVAL || {};
         }
 
         handleResize() {
-            // Adaptive Mobile Design
-            // Strategy: Maintain aspect ratio or fit width?
-            // "Decrease to fit all content" -> Fit everything within view.
-            
             this.canvas.width = window.innerWidth;
             this.canvas.height = window.innerHeight;
             CONFIG.CANVAS_WIDTH = window.innerWidth;
             CONFIG.CANVAS_HEIGHT = window.innerHeight;
-
-            // Optional: You could scale the context here if you wanted a fixed logic resolution
-            // but for this game, simply resizing canvas works because entities are relative to pixels.
-            // However, to make field "smaller" visually on mobile (so you see more area relative to player size?)
-            // or "fit content"? 
-            // The user said: "make adaptive mobile design for field (can reduce to fit all game content)"
-            // Use CSS transform to fit? Or logic scale?
-            // Let's rely on standard resizing but ensure UI scales.
-            // The best way for "fit all content" is often to zoom out.
-            // Let's add a scale factor if width is small.
             
-            this.scale = 1;
-            if (window.innerWidth < 600) {
-                 this.scale = window.innerWidth / 600; // Zoom out to show at least 600px worth of width? 
-                 // Actually, if we zoom out, everything gets smaller.
-                 // User wants "Decrease to fit all content" -> simple resize usually handles this if camera follows player.
-                 // But here there is no camera, it's a fixed screen?
-                 // Player moves around the screen `this.x`, `this.y`.
-                 // `Utils.checkBounds` uses CONFIG.CANVAS_WIDTH.
-                 // So the field exits ONLY within the canvas.
-                 // So "fit all content" just means the canvas IS the field. 
-                 // Simple resize is sufficient for "fitting", but maybe things are too big?
-                 // Let's leave as is for now, standard resize matches "field fits screen".
-            }
+            // Re-init grid with new dimensions
+            this.grid = new window.SURVIVAL.SpatialGrid(CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT, 100);
         }
 
         bindInputs() {
@@ -99,6 +81,7 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.kills = 0;
             this.goldGainedInRun = 0;
             this.lastLevel = 1;
+            this.floatingTexts = []; // Clear texts
             
             this.gameState = 'PLAYING';
             this.ui.showHUD();
@@ -136,19 +119,23 @@ window.SURVIVAL = window.SURVIVAL || {};
             
             this.player.handleInput(this.keys);
             this.player.update(dt);
-            this.weapons.update(performance.now(), this.player, this.enemies.enemies);
+            this.weapons.update(performance.now(), this.player, this.enemies.enemies, this.getAttackZoneRadius());
             this.enemies.update(this.player);
 
-            // Pickup Magnet Logic
-            // Calculate effective range: Base pickup range OR Blaster range (Attack Zone)
-            let blasterRange = 0;
-            const blaster = this.weapons.weapons.find(w => w.name === 'Blaster');
-            if (blaster) {
-                blasterRange = blaster.range * (this.player.stats.rangeMultiplier || 1);
+            // Update Floating Texts
+            for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+                const ft = this.floatingTexts[i];
+                ft.y -= 1; // Float up
+                ft.life -= dt;
+                if (ft.life <= 0) {
+                    this.floatingTexts.splice(i, 1);
+                }
             }
 
+            // Pickup Magnet Logic
+            const attackZoneRadius = this.getAttackZoneRadius();
             const basePickupRange = this.player.stats.pickupRange || 100;
-            const effectiveRange = Math.max(basePickupRange, blasterRange);
+            const effectiveRange = Math.max(basePickupRange, attackZoneRadius);
 
             this.enemies.pickups.forEach(p => {
                 const dist = Utils.getDistance(this.player.x, this.player.y, p.x, p.y);
@@ -161,11 +148,12 @@ window.SURVIVAL = window.SURVIVAL || {};
             });
 
             this.checkCollisions();
-            this.checkCollisions();
             this.ui.updateHUD(this.player, Utils.formatTime(this.gameTime), this.kills, this.weapons.weapons);
 
             if (this.player.isDead) {
                 this.endGame();
+            } else if (this.gameTime >= 300) { // 5 Minutes Win
+                this.winGame();
             }
             
             // Check Level Up
@@ -175,13 +163,42 @@ window.SURVIVAL = window.SURVIVAL || {};
             }
         }
         
+        getAttackZoneRadius() {
+            let blasterRange = 0;
+            // Assuming 'weapons' is WeaponController which has 'weapons' array
+            const blaster = this.weapons.weapons.find(w => w.name === 'Blaster');
+            if (blaster) {
+                blasterRange = blaster.range * (this.player.stats.rangeMultiplier || 1);
+            }
+            return blasterRange;
+        }
+
+        spawnFloatingText(x, y, text, color) {
+            this.floatingTexts.push({
+                x: x,
+                y: y,
+                text: text,
+                color: color,
+                life: 800, // ms
+                maxLife: 800
+            });
+        }
+
         checkCollisions() {
+            // Optimization: Use Spatial Grid
+            this.grid.clear();
+            this.enemies.enemies.forEach(e => this.grid.add(e));
+
             // Projectiles vs Enemies
             this.weapons.projectiles.forEach(proj => {
-                // Check if explosive should detenonate at max range (if missed everything)
-                // For now, only detonate on impact
+                if (proj.markedForDeletion) return;
 
-                this.enemies.enemies.forEach(enemy => {
+                // Query grid
+                const candidates = this.grid.getPotentialCollisions(proj);
+                
+                for (const enemy of candidates) {
+                    if (enemy.markedForDeletion) continue;
+
                     if (Utils.checkCircleCollision(proj, enemy) && !proj.hitList.includes(enemy)) {
                         // Impact Logic
                         
@@ -200,7 +217,9 @@ window.SURVIVAL = window.SURVIVAL || {};
                             const kForce = proj.knockback || 2; 
                             
                             enemy.takeDamage(damage, Math.cos(angle)*kForce, Math.sin(angle)*kForce);
-                            this.ui.spawnFloatingText(enemy.x, enemy.y, Math.floor(damage), CONFIG.COLORS.TEXT_DAMAGE);
+                            
+                            // Use visual effect method
+                            this.spawnFloatingText(enemy.x, enemy.y, Math.floor(damage), CONFIG.COLORS.TEXT_DAMAGE);
                             
                             if (proj.pierce > 0) {
                                 proj.pierce--;
@@ -214,17 +233,22 @@ window.SURVIVAL = window.SURVIVAL || {};
                             }
                         }
                     }
-                });
+                }
             });
 
             // Player vs Enemies
-            this.enemies.enemies.forEach(enemy => {
+            // Player is one entity, just check all enemies or grid?
+            // Grid might be slightly faster if many enemies are far away.
+            const playerCandidates = this.grid.getPotentialCollisions(this.player);
+            for (const enemy of playerCandidates) {
                  if (Utils.checkCircleCollision(this.player, enemy)) {
                      this.player.takeDamage(enemy.damage);
                  }
-            });
+            }
 
             // Player vs Pickups
+            // Pickups are not in grid right now.
+            // If many pickups, might need grid too. For now leave as O(N) loop since N is usually < 100
             this.enemies.pickups.forEach(pickup => {
                 if (Utils.checkCircleCollision(this.player, pickup)) {
                     if (pickup.type === 'xp') {
@@ -245,8 +269,12 @@ window.SURVIVAL = window.SURVIVAL || {};
             // visual effect (simple circle for now)
             // TODO: Add visual manager for explosions
             
-            // Damage area
-            this.enemies.enemies.forEach(enemy => {
+            // Optimization: Use grid for explosion area check too!
+            // Create a temp entity for query
+            const explosionEntity = { x: x, y: y, radius: radius };
+            const candidates = this.grid.getPotentialCollisions(explosionEntity);
+
+            for (const enemy of candidates) {
                 const dist = Utils.getDistance(x, y, enemy.x, enemy.y);
                 if (dist <= radius) {
                     // Falloff damage? No, full damage for satisfying explosions
@@ -254,13 +282,13 @@ window.SURVIVAL = window.SURVIVAL || {};
                     const kForce = knockbackVal || 5; // Big knockback for explosions
                     
                     enemy.takeDamage(damage, Math.cos(angle)*kForce, Math.sin(angle)*kForce);
-                    this.ui.spawnFloatingText(enemy.x, enemy.y, Math.floor(damage), '#ff5722'); // Orange text
+                    this.spawnFloatingText(enemy.x, enemy.y, Math.floor(damage), '#ff5722'); // Orange text
                     
                     if (enemy.hp <= 0 && !enemy.alreadyDead) {
                         this.killEnemy(enemy);
                     }
                 }
-            });
+            }
         }
 
         killEnemy(enemy) {
@@ -290,16 +318,11 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.enemies.draw(this.ctx);
             
             // Draw Attack Zone (Visual Indicator)
-            // "show visually this zone" - implies the effective range of Blaster
-            let blasterRange = 0;
-            const blaster = this.weapons.weapons.find(w => w.name === 'Blaster');
-            if (blaster) {
-                blasterRange = blaster.range * (this.player.stats.rangeMultiplier || 1);
-            }
+            const attackZoneRadius = this.getAttackZoneRadius();
 
-            if (blasterRange > 0) {
+            if (attackZoneRadius > 0) {
                 this.ctx.beginPath();
-                this.ctx.arc(this.player.x, this.player.y, blasterRange, 0, Math.PI * 2);
+                this.ctx.arc(this.player.x, this.player.y, attackZoneRadius, 0, Math.PI * 2);
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
                 this.ctx.lineWidth = 2;
                 this.ctx.setLineDash([10, 10]);
@@ -309,6 +332,16 @@ window.SURVIVAL = window.SURVIVAL || {};
 
             this.weapons.draw(this.ctx);
             this.player.draw(this.ctx);
+
+            // Draw Floating Texts
+            this.ctx.font = 'bold 12px "Press Start 2P"'; // using pixel font
+            this.ctx.textAlign = 'center';
+            this.floatingTexts.forEach(ft => {
+                this.ctx.globalAlpha = ft.life / ft.maxLife; // Fade out
+                this.ctx.fillStyle = ft.color;
+                this.ctx.fillText(ft.text, ft.x, ft.y);
+                this.ctx.globalAlpha = 1.0;
+            });
         }
 
         triggerLevelUp() {
@@ -414,11 +447,21 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.lastTime = performance.now();
         }
 
+        winGame() {
+            this.gameState = 'GAME_OVER';
+            this.ui.showGameOver({
+                time: Utils.formatTime(this.gameTime),
+                gold: this.goldGainedInRun,
+                isWin: true
+            });
+        }
+
         endGame() {
             this.gameState = 'GAME_OVER';
             this.ui.showGameOver({
                 time: Utils.formatTime(this.gameTime),
-                gold: this.goldGainedInRun
+                gold: this.goldGainedInRun,
+                isWin: false
             });
         }
     }

@@ -129,7 +129,7 @@ window.SURVIVAL = window.SURVIVAL || {};
             this.spawnRate = 120;
         }
 
-        spawnEnemy(player) {
+        spawnEnemy(player, timeSec) {
             // Spawn off-screen randomly
             let x, y;
             if (Math.random() < 0.5) {
@@ -140,14 +140,21 @@ window.SURVIVAL = window.SURVIVAL || {};
                 y = Math.random() < 0.5 ? -50 : CONFIG.CANVAS_HEIGHT + 50;
             }
 
-            // Determine enemy type based on time/difficulty
+            // Determine enemy type based on stage time
             let type = CONFIG.ENEMIES.BASIC;
-            // Simple logic: introduce stronger enemies over time
-            const timeMinutes = this.waveTimer / 60 / 60; // Approximate minutes
-            if (timeMinutes > 3 && Math.random() < 0.1) type = CONFIG.ENEMIES.TANK;
-            else if (timeMinutes > 1 && Math.random() < 0.3) type = CONFIG.ENEMIES.FAST;
+            
+            if (timeSec > 180) { // Stage 4+
+                // Mix of everything
+                const rand = Math.random();
+                if (rand < 0.2) type = CONFIG.ENEMIES.TANK;
+                else if (rand < 0.5) type = CONFIG.ENEMIES.FAST;
+            } else if (timeSec > 120) { // Stage 3
+                 if (Math.random() < 0.3) type = CONFIG.ENEMIES.TANK;
+                 else if (Math.random() < 0.3) type = CONFIG.ENEMIES.FAST;
+            } else if (timeSec > 60) { // Stage 2
+                 if (Math.random() < 0.4) type = CONFIG.ENEMIES.FAST;
+            }
 
-            // Boss wave every 5 min?
             const enemy = new Enemy(x, y, type);
             // Scale with difficulty
             enemy.hp *= this.difficultyMultiplier;
@@ -157,21 +164,57 @@ window.SURVIVAL = window.SURVIVAL || {};
         }
 
         update(player) {
+            // Stage System Logic
             this.waveTimer++;
-            // Increase difficulty every 30 seconds (1800 frames)
-            if (this.waveTimer % 1800 === 0) { 
-                 this.difficultyMultiplier += 0.3; // +30% stats
-                 this.spawnRate = Math.max(15, this.spawnRate - 10); // Spawn faster
+            
+            // Define Stages
+            // Stage 1: 0-60s (Basic)
+            // Stage 2: 60-120s (Fast + Basic)
+            // Stage 3: 120-180s (Tanks + Fast)
+            // Stage 4: 180-240s (High Density)
+            // Stage 5: 240-300s (Boss/Win)
+            
+            const timeSec = this.waveTimer / 60; // Assuming 60fps
+            let spawnInterval = 120;
+            let spawnAmount = 1;
+
+            if (timeSec < 60) {
+                // Stage 1
+                this.difficultyMultiplier = 1;
+                spawnInterval = 100;
+            } else if (timeSec < 120) {
+                // Stage 2
+                this.difficultyMultiplier = 1.2;
+                spawnInterval = 80;
+            } else if (timeSec < 180) {
+                // Stage 3
+                this.difficultyMultiplier = 1.5;
+                spawnInterval = 60;
+                spawnAmount = 2;
+            } else if (timeSec < 240) {
+                // Stage 4
+                this.difficultyMultiplier = 1.8;
+                spawnInterval = 40;
+                spawnAmount = 3;
+            } else if (timeSec < 300) {
+                // Stage 5: Victory Lap / Hard
+                this.difficultyMultiplier = 2.5;
+                spawnInterval = 30;
+                spawnAmount = 4;
+            } else {
+                // WIN CONDITION
+                // Signal Game WIN (handled in Game.js by checking time or event?)
+                // For now, let's keep spawning but maybe trigger a win event?
+                // Actually, let's trigger it in Game.update by checking time.
+                // Or we can stop spawning here.
             }
 
             this.spawnTimer++;
-            if (this.spawnTimer >= this.spawnRate) {
-                // Spawn multiple based on difficulty
-                const spawnCount = Math.floor(this.difficultyMultiplier); 
-                for(let i=0; i<spawnCount; i++) {
-                     this.spawnEnemy(player);
-                }
-                this.spawnTimer = 0;
+            if (this.spawnTimer >= spawnInterval && timeSec < 300) {
+                 for(let i=0; i<spawnAmount; i++) {
+                     this.spawnEnemy(player, timeSec);
+                 }
+                 this.spawnTimer = 0;
             }
 
             this.enemies.forEach(e => e.update(player));

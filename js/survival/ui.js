@@ -305,21 +305,7 @@ window.SURVIVAL = window.SURVIVAL || {};
             });
         }
 
-        // Floating Text System
-        spawnFloatingText(x, y, text, color) {
-            const el = document.createElement('div');
-            el.className = 'floating-text';
-            el.textContent = text;
-            el.style.left = `${x}px`;
-            el.style.top = `${y}px`;
-            el.style.color = color;
-            
-            // Append to container (game container) to position relatively
-            document.getElementById('game-container').appendChild(el);
 
-            // Remove after animation
-            setTimeout(() => el.remove(), 800);
-        }
     }
     
     window.SURVIVAL.UIManager = UIManager;

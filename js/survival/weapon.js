@@ -90,9 +90,9 @@ window.SURVIVAL = window.SURVIVAL || {};
         }
         
         // Returns array of projectiles if fired, null otherwise
-        update(time, player, enemies) {
+        update(time, player, enemies, attackZoneRadius) {
             if (time - this.lastFired >= this.cooldown) {
-                const projectiles = this.fire(player, enemies);
+                const projectiles = this.fire(player, enemies, attackZoneRadius);
                 if (projectiles && projectiles.length > 0) {
                     this.lastFired = time;
                     return projectiles;
@@ -101,10 +101,16 @@ window.SURVIVAL = window.SURVIVAL || {};
             return null;
         }
 
-        fire(player, enemies) {
+        fire(player, enemies, attackZoneRadius) {
             // Apply Player Bonuses
             const pStats = player.stats || {};
-            const finalRange = this.range * (pStats.rangeMultiplier || 1);
+            let finalRange = this.range * (pStats.rangeMultiplier || 1);
+            
+            // Constrain to Attack Zone if defined
+            if (attackZoneRadius && attackZoneRadius > 0) {
+                finalRange = Math.min(finalRange, attackZoneRadius);
+            }
+
             const finalCount = this.count + (pStats.amountBonus || 0);
             const finalPierce = this.pierce + (pStats.penetrationBonus || 0);
             const finalKnockback = 2 * (pStats.knockbackMultiplier || 1); // Base knockback 2
@@ -190,10 +196,10 @@ window.SURVIVAL = window.SURVIVAL || {};
             }
         }
 
-        update(time, player, enemies) {
+        update(time, player, enemies, attackZoneRadius) {
             // Fire weapons
             for (const weapon of this.weapons) {
-                const newProjectiles = weapon.update(time, player, enemies);
+                const newProjectiles = weapon.update(time, player, enemies, attackZoneRadius);
                 if (newProjectiles) {
                     this.projectiles.push(...newProjectiles);
                 }
